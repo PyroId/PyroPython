@@ -1,0 +1,149 @@
+#start_config
+num_jobs: 36 # number of parallel jobs
+max_iter: 10 # maximum number of iterations
+num_points: 36  # How many points explored per iteration
+num_initial: 100 # Number of points in initial design
+fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
+variables:
+          VAR1: [ 0.1, 0.5]
+          VAR2: [ 0.5,  2]
+          VAR3: [ 10,   500]
+          VAR4: [ 10000,24000]
+          VAR5: [ 0.01, 0.5]
+          VAR6: [ 0.5,  1.5]
+#simulation - simulation outputfiles
+#entries in format:
+#   Var_name: output_file, col name, conversion factor
+#Var_name is used to match the simulation output and experimental data
+#output_file gives the fiel where this output is located int
+#col name gives the column name in output file
+#conversion factor  factor for converting from e.g. g to kg (i.e, c in  y=c*x)
+#experiment - experimental data in same format
+#   Var_name: data_file, col name, conversion factor
+simulation:
+    MLR: ['cone_hrr.csv','MLR_TOTAL',100000]
+experiment:
+    MLR: ['06110001_red.CSV','Specific MLR',1.0]
+#end_config
+
+
+&HEAD CHID='cone',TITLE='double cone calorimeter' /
+
+&MESH   IJK=3,3,4
+    XB = -0.15,0.15,-0.15,0.15,0.0,0.4 /
+
+&TIME TWFIN=1000., DT = 1., WALL_INCREMENT = 1 / 600
+
+&DUMP DT_PL3D = 10000000. SMOKE3D = .FALSE. /
+
+&VENT XB = -0.05,0.05,-0.05,0.05,0.0,0.0, SURF_ID = 'BIRCH' /
+
+
+&SURF ID='BIRCH'
+      CELL_SIZE_FACTOR = 0.5
+      STRETCH_FACTOR = 1.
+      EXTERNAL_FLUX = 50.
+      MATL_ID(1,1) = 'SOLID'
+    BACKING = 'INSULATED'
+      THICKNESS  =  0.01035 /   
+
+MATL ID               = 'CASI'
+      CONDUCTIVITY     = 0.10
+      DENSITY          = 800.
+      SPECIFIC_HEAT    = 1.0 /
+      CONDUCTIVITY_RAMP = 'KSCASI'
+      CONDUCTIVITY     = 0.05
+RAMP ID='KSCASI' T = 20,  F= 0.15 /
+RAMP ID='KSCASI' T = 400, F= 0.19/
+RAMP ID='KSCASI' T = 800, F= 0.24/
+
+
+Birch material H5, density 606 kg/m3, residue 22 %
+MATL    ID = 'BIRCH'
+        EMISSIVITY          = 0.85
+        DENSITY             = 606.
+        SPECIFIC_HEAT_RAMP  = 'C_P_BIRCH'
+    CONDUCTIVITY_RAMP   = 'KS'  
+        N_REACTIONS         = 1
+        A           = 7.513E11
+        E           = 1.61E5
+        N_S         = 3.12
+        NU_RESIDUE      = 0.22
+        NU_FUEL         = 0.78
+        RESIDUE             = 'CHAR'
+        NU_WATER        = 0.0
+    HEAT_OF_REACTION    = 315.
+    HEAT_OF_COMBUSTION  = 14500.0 /
+
+
+Birch C_P from DSC sample FS9
+&RAMP ID = 'C_P_BIRCH' T = 20   F = 1.20 /
+&RAMP ID = 'C_P_BIRCH' T = 180. F = 1.36 /
+&RAMP ID = 'C_P_BIRCH' T = 210. F = 1.42 /
+
+Reaction K1
+&MATL ID = 'SOLID'
+      EMISSIVITY    = 1.0
+      CONDUCTIVITY  = $VAR1
+      SPECIFIC_HEAT = $VAR2
+      DENSITY       = 550. 
+      N_REACTIONS   = 1
+      A     = 7.513E11
+      E         = 1.61E5
+      N_S       = 3.12
+      NU_MATL   =0.171619
+      MATL_ID = 'CHAR'
+      NU_SPEC   =0.828381
+      SPEC_ID='PROPANE' 
+      HEAT_OF_REACTION = $VAR3
+      HEAT_OF_COMBUSTION = $VAR4
+      /
+
+&MATL ID = 'CHAR'
+    EMISSIVITY  = 1.0
+    DENSITY     = 94.
+    CONDUCTIVITY    = $VAR5
+    SPECIFIC_HEAT   = $VAR6 /
+
+&REAC ID = 'PROPANE'
+    SOOT_YIELD = 0.01
+    C   =   3
+    H   =   8
+    HEAT_OF_COMBUSTION = 46460.
+    IDEAL   =   .TRUE. /
+
+&RAMP ID = 'KS',  T = 20.,   F = 0.15  /
+&RAMP ID = 'KS',  T = 500.,  F = 0.29  / 0.29
+&RAMP ID = 'KSC', T = 20.,   F = 0.08 / 0.08
+&RAMP ID = 'KSC', T = 900.,  F = 0.25  /
+&RAMP ID = 'CPV', T = 20.,   F = 1.2   /
+&RAMP ID = 'CPV', T = 500.,  F = 3.0   /
+&RAMP ID = 'CPC', T = 20.,   F = 0.68  /
+&RAMP ID = 'CPC', T = 400.,  F = 1.5   /
+&RAMP ID = 'CPC', T = 900.,  F = 1.8   /
+
+&VENT MB='XMIN', SURF_ID='OPEN' /
+&VENT MB='XMAX', SURF_ID='OPEN' /
+&VENT MB='YMIN', SURF_ID='OPEN' /
+&VENT MB='YMAX', SURF_ID='OPEN' /
+&VENT MB='ZMAX', SURF_ID='OPEN' /
+
+BNDF QUANTITY='RADIATIVE_FLUX' /
+BNDF QUANTITY='WALL_TEMPERATURE' /
+BNDF QUANTITY='BURNING_RATE' /
+
+SLCF PBY=.0,QUANTITY='TEMPERATURE' /
+SLCF PBY=.0,QUANTITY='RADIANT_INTENSITY' /
+SLCF PBY=.0,QUANTITY='HRRPUV' /
+
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='GAUGE',QUANTITY = 'GAUGE HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='RAD', QUANTITY = 'RADIATIVE HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='IN',QUANTITY = 'INCIDENT HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='RHO',QUANTITY = 'SURFACE DENSITY' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='MLR', QUANTITY = 'BURNING RATE' /
+
+PROF XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'DENSITY' /
+PROF XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'CELLU' /
+PROF XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'ACTIVE' /
+PROF XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'CHAR' /
+PROF XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'TEMPERATURE' /
