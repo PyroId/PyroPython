@@ -1,0 +1,133 @@
+#start_config
+num_jobs: 36 # number of parallel jobs
+max_iter: 50 # maximum number of iterations
+num_points: 36  # How many points explored per iteration
+num_initial: 300 # Number of points in initial design
+fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
+variables:
+          KS300: [ 0.2, 0.9]
+          KS600: [ 0.2,  0.9]
+          CS600: [ 1.20,   2.5]
+          RHOC : [150,400]
+          KC   : [ 0.01, 0.3]
+#simulation - simulation outputfiles
+#entries in format:
+#   Var_name: output_file, col name, conversion factor
+#Var_name is used to match the simulation output and experimental data
+#output_file gives the fiel where this output is located int
+#col name gives the column name in output file
+#conversion factor  factor for converting from e.g. g to kg (i.e, c in  y=c*x)
+#experiment - experimental data in same format
+#   Var_name: data_file, col name, conversion factor
+simulation:
+    MLR: ['cone_hrr.csv','MLR_TOTAL',100000]
+experiment:
+    MLR: ['09090043_red.CSV','Specific MLR',1.0]
+#end_config
+
+
+&HEAD CHID='cone',TITLE='double cone calorimeter' /
+
+
+Single step pyrolysis scheme taken from:
+
+Hostikka, S., and A. Matala. "Pyrolysis Model for Predicting the Heat Release Rate of Birch Wood." Combustion Science and Technology 189.8 (2017): 1373-1393.
+
+
+&MESH   IJK=3,3,4
+    XB = -0.15,0.15,-0.15,0.15,0.0,0.4 /
+
+&TIME TWFIN=852., DT = 1., WALL_INCREMENT = 1 / 600
+
+&DUMP DT_PL3D = 10000000. SMOKE3D = .FALSE., DT_HRR=1,DT_DEVC=1 /
+
+&VENT XB = -0.05,0.05,-0.05,0.05,0.0,0.0, SURF_ID = 'BIRCH',COLOR="RED" /
+
+
+&SURF ID='BIRCH'
+      CELL_SIZE_FACTOR = 0.5
+      STRETCH_FACTOR   = 1.
+      EXTERNAL_FLUX    = 50.
+      MATL_ID(1,1)     = 'BIRCH'
+      BACKING          = 'INSULATED'
+      THICKNESS        =  0.02 /   
+
+
+Reaction:  "Average" from Table 2
+
+&MATL    ID = 'BIRCH'
+        EMISSIVITY          = 1.0
+        DENSITY             = 600.
+        SPECIFIC_HEAT_RAMP  = 'C_P_BIRCH'
+        CONDUCTIVITY_RAMP   = 'KS'  
+        N_REACTIONS         = 1
+        A                   = 5.58E7
+        E                   = 123E3
+        N_S                 = 1.0
+        NU_MATL             = 0.164
+        NU_SPEC             = 0.836
+        SPEC_ID             = 'PROPANE'
+        MATL_ID             = 'CHAR'
+        HEAT_OF_REACTION    = 400.
+        HEAT_OF_COMBUSTION  = 14500.0 /
+
+
+
+
+&RAMP ID = 'C_P_BIRCH' T = 20   F = 1.20 / Table 5
+&RAMP ID = 'C_P_BIRCH' T = 300. F = 1.45 / Calc from table 5 
+&RAMP ID = 'C_P_BIRCH' T = 600. F = $CS600 /1.5 /  Table 7
+
+&RAMP ID = 'KS',  T = 20.,   F = 0.216  /
+&RAMP ID = 'KS',  T = 300.,  F = $KS300 /0.5  / 
+&RAMP ID = 'KS',  T = 600.,  F = $KS600 /0.6  / 
+
+Table 7
+&MATL ID            = 'CHAR'
+    EMISSIVITY      = 1.0
+    DENSITY         = $RHOC    
+    CONDUCTIVITY    = $KC      
+    SPECIFIC_HEAT   = 1.5 /
+
+Table 7 Char:
+    DENSITY = 380
+    CONDUCTIVITY = 0.1
+
+&RAMP ID = 'CPC', T = 20.,   F = 0.5  /
+&RAMP ID = 'CPC', T = 198.,  F = 0.52 /
+&RAMP ID = 'CPC', T = 450.,  F = 1.10 /
+
+&RAMP ID = 'KSC', T = 198.,  F = 0.52 / 0.08
+&RAMP ID = 'KSC', T = 234.,  F = 0.76 /
+&RAMP ID = 'KSC', T = 306.,  F = 0.96 /
+&RAMP ID = 'KSC', T = 378.,  F = 1.03 /
+&RAMP ID = 'KSC', T = 450.,  F = 1.10 /
+
+&REAC ID = 'PROPANE'
+    SOOT_YIELD = 0.01
+    C   =   3
+    H   =   8
+    HEAT_OF_COMBUSTION = 46460.
+    IDEAL   =   .TRUE. /
+
+
+
+&RAMP ID = 'CPV', T = 20.,   F = 1.2   /
+&RAMP ID = 'CPV', T = 500.,  F = 3.0   /
+
+
+&VENT MB='XMIN', SURF_ID='OPEN' /
+&VENT MB='XMAX', SURF_ID='OPEN' /
+&VENT MB='YMIN', SURF_ID='OPEN' /
+&VENT MB='YMAX', SURF_ID='OPEN' /
+&VENT MB='ZMAX', SURF_ID='OPEN' /
+
+
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='GAUGE',QUANTITY = 'GAUGE HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='RAD', QUANTITY = 'RADIATIVE HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='IN',QUANTITY = 'INCIDENT HEAT FLUX' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='RHO',QUANTITY = 'SURFACE DENSITY' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID='MLR', QUANTITY = 'BURNING RATE' /
+
+
+&BNDF QUANTITY="WALL TEMPERATURE"/
