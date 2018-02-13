@@ -30,7 +30,7 @@ def optimize_model(model,cfg):
                           **cfg.optimizer_opts)
     # initial design (random)
     log=open("log.csv","w",buffering=1)
-    header = ",".join([name for name,bounds in cfg.variables]+["Objective"])
+    header = ",".join(["Iteration"]+[name for name,bounds in cfg.variables]+["Objective"])
     log.write(header+"\n")
     print("picking initial points")
     x = optimizer.ask(n_points=cfg.num_initial)
@@ -44,6 +44,13 @@ def optimize_model(model,cfg):
     optimizer.tell(x, y)
     t1 = time.perf_counter()
     print(" Complete in %.3f seconds" % (t1-t0))
+    ind = np.argmin(y)
+    yi = y[ind]
+    Xi = x[ind]
+    line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
+    log.write(",".join(line)+"\n")
+    outname = "Iterations/best%d.fds" % 0
+    model.write_fds_file(outname,model.template,Xi)
     for i in range(cfg.max_iter): 
         print("Asking for points.", end='', flush=True)
         t0 = time.perf_counter()
@@ -63,10 +70,11 @@ def optimize_model(model,cfg):
         ind = np.argmin(y)
         yi = y[ind]
         Xi = x[ind]
-        line = ["%.3f" % f for f in Xi] + ["%3f" % yi]
+        line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
         log.write(",".join(line)+"\n")
-        outname = "Iterations/best%d.fds" % i
+        outname = "Iterations/best%d.fds" % (i+1)
         model.write_fds_file(outname,model.template,Xi)
+
     log.close
     ind = np.argmin(optimizer.yi)
     outname = "best.fds"
