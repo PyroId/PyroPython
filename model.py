@@ -80,7 +80,7 @@ class Model:
         Nk = len(exp_data)
         for key,(etime,edata) in exp_data.items():
             sdata = sim_data[key]
-            diff = np.sum((edata-sdata)**2/(edata-np.mean(edata))**2)
+            diff = np.mean(np.abs((edata-sdata)))
             fitness += 1.0/Nk * diff
         return fitness
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     main()
     fname=sys.argv[1]
     cfg = Config(fname)
-    model = Cone_calorimeter(exp_data=cfg.exp_data,
+    model = Model(exp_data=cfg.exp_data,
                         params=cfg.variables,
                         simulation=cfg.simulation,
                         fds_command=cfg.fds_command,

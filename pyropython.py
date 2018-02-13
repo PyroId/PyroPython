@@ -24,13 +24,13 @@ def initialize_model(cfg):
     return model
 
 def optimize_model(model,cfg):
+
+
     optimizer = Optimizer(dimensions=model.get_bounds(),
-                          base_estimator="GP",
-                          acq_func="LCB",
-                          n_initial_points=cfg.num_initial)
+                          **cfg.optimizer_opts)
     # initial design (random)
     log=open("log.csv","w",buffering=1)
-    header = ",".join([name for name,bounds in cfg.variables]+["fitness"])
+    header = ",".join([name for name,bounds in cfg.variables]+["Objective"])
     log.write(header+"\n")
     print("picking initial points")
     x = optimizer.ask(n_points=cfg.num_initial)

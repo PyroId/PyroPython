@@ -8,6 +8,7 @@ import sys
 import yaml as y
 from pandas import read_csv
 from numpy import array
+from scipy import signal
 
 class Config:
     num_jobs    = 1
@@ -19,20 +20,22 @@ class Config:
     experiment  = {}
     fname       = None
     fds_command = None
+    optimizer_opts = {"base_estimator":       "ET",
+                      "acq_func":             "gp_hedge",
+                      "acq_optimizer":        "auto",
+                      "n_initial_points":      100,
+                      "acq_optimizer_kwargs":  {"n_points": 10000, "n_restarts_optimizer": 5,
+                                              "n_jobs": 1},
+                      "acq_func_kwargs":       {"xi": 0.05, "kappa": 1.96}
+                      };
+    filtering_options= {}
 
     def  __init__(self, fname):
         self.parse_input(fname)
         self.proc_input()
         self.fname = fname
         
-    def get_value(self,key,config,default=None):
-        if key in config:
-            return config[key]
-        else:
-            if not default:
-                sys.exit("%s not defined in config" % key)
-            else:
-                return default
+
 
     def parse_input(self,fname):
         lines=open(fname,"r").read()
@@ -55,12 +58,17 @@ class Config:
         self.simulation = config['simulation']
         self.experiment = config['experiment']
         self.variables  = list(config['variables'].items())
-        self.max_iter=self.get_value("max_iter",config,50)
-        self.num_jobs=self.get_value("num_jobs",config,-1)
-        self.num_points=self.get_value("num_points",config,1)
-        self.num_initial=self.get_value("num_initial",config,1)    
-        self.fds_command=self.get_value("fds_command",config,"fds") 
-    
+        self.max_iter=config.get("max_iter",50)
+        self.num_jobs=config.get("num_jobs",-1)
+        self.num_points=config.get("num_points",1)
+        self.num_initial=config.get("num_initial",1) 
+        self.optimizer_opts["n_initial_points"]=self.num_initial
+        self.optimizer_opts["acq_optimizer_kwargs"]["n_jobs"]=1
+        self.optimizer_opts["acq_optimizer_kwargs"]["n_restarts_optimizer"]=self.num_jobs
+        self.fds_command=config.get("fds_command","fds") 
+        self.optimizer_opts=config.get("optimizer",self.optimizer_opts)
+
+
     def proc_input(self):
         for key in self.simulation:
             if not key in self.experiment:
@@ -69,10 +77,12 @@ class Config:
             if not key in self.simulation:
                 sys.exit("No simulation data for variable %s" % key)
         for key,(fname,dname,conversion_factor) in self.experiment.items():
-            tmp=read_csv(fname,header=1,encoding = "latin-1")
+            tmp=read_csv(fname,header=1,encoding = "latin-1",index_col=False)
             tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
             tmp=tmp.dropna(axis=1,how='any')
-            self.exp_data[key]=(array(tmp['Time']),array(tmp[dname])*conversion_factor)
+            b, a = signal.butter(8, 0.125) # Nyquist = 2 seconds =0.5 Hz = 1 20 seconds = 0.05
+            dat = signal.filtfilt(b, a, tmp[dname], method="gust")
+            self.exp_data[key]=(array(tmp['Time']),dat*conversion_factor)
             
 if __name__=="__main__":
     fname=sys.argv[1]
