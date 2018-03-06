@@ -1,8 +1,8 @@
 #start_config
 num_jobs: 36 # number of parallel jobs
-max_iter: 50 # maximum number of iterations
-num_points: 36  # How many points explored per iteration
-num_initial: 300 # Number of points in initial design
+max_iter: 5 # maximum number of iterations
+num_points: 1  # How many points explored per iteration
+num_initial: 50 # Number of points in initial design
 fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
 variables:
           KS300: [ 0.2, 0.9]
@@ -21,8 +21,23 @@ variables:
 #   Var_name: data_file, col name, conversion factor
 simulation:
     MLR: ['cone_hrr.csv','MLR_TOTAL',100000]
+    HRR: ['cone_hrr.csv','HRR',100]
 experiment:
     MLR: ['09090043_red.CSV','Specific MLR',1.0]
+    HRR: ['09090043_red.CSV','HRR',1.0]
+obejctive:
+    type: "RMSE"
+    weights: {'MLR': 1.0, 'HRR': 0.0}
+plotting:
+    MLR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
+    HRR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
+optimizer:
+         base_estimator:        'GP'
+         acq_func:              'EI'
+         acq_optimizer:         'auto'
+         n_initial_points:      36 
+         acq_optimizer_kwargs:  {n_points: 10000, n_restarts_optimizer": 5,n_jobs: 1}
+         acq_func_kwargs:       {xi: 0.05, kappa: 0.96}
 #end_config
 
 
@@ -76,17 +91,17 @@ Reaction:  "Average" from Table 2
 
 &RAMP ID = 'C_P_BIRCH' T = 20   F = 1.20 / Table 5
 &RAMP ID = 'C_P_BIRCH' T = 300. F = 1.45 / Calc from table 5 
-&RAMP ID = 'C_P_BIRCH' T = 600. F = $CS600 /1.5 /  Table 7
+&RAMP ID = 'C_P_BIRCH' T = 600. F = {{CS600}} /1.5 /  Table 7
 
 &RAMP ID = 'KS',  T = 20.,   F = 0.216  /
-&RAMP ID = 'KS',  T = 300.,  F = $KS300 /0.5  / 
-&RAMP ID = 'KS',  T = 600.,  F = $KS600 /0.6  / 
+&RAMP ID = 'KS',  T = 300.,  F = {{KS300}} /0.5  / 
+&RAMP ID = 'KS',  T = 600.,  F = {{KS600}} /0.6  / 
 
 Table 7
 &MATL ID            = 'CHAR'
     EMISSIVITY      = 1.0
-    DENSITY         = $RHOC    
-    CONDUCTIVITY    = $KC      
+    DENSITY         = {{RHOC}}    
+    CONDUCTIVITY    = {{KC}}      
     SPECIFIC_HEAT   = 1.5 /
 
 Table 7 Char:
