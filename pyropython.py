@@ -1,7 +1,8 @@
 from skopt import Optimizer,dump
 from skopt.learning import GaussianProcessRegressor
 from skopt.space import Real
-from sklearn.externals.joblib import Parallel, delayed
+#from sklearn.externals.joblib import Parallel, delayed
+from concurrent.futures import ProcessPoolExecutor
 # example objective taken from skopt
 from skopt.benchmarks import branin
 from model import Model
@@ -13,6 +14,7 @@ import time
 import sys
 import argparse
 from config import Config
+import pickle
 
 
 def initialize_model(cfg):
@@ -20,12 +22,14 @@ def initialize_model(cfg):
                   params=cfg.variables,
                   simulation=cfg.simulation,
                   fds_command=cfg.fds_command,
-                  template=open(cfg.fname,"r").readlines())
+                  template=open(cfg.fname,"r").read())
     return model
+
+
 
 def optimize_model(model,cfg):
 
-
+    ex = ProcessPoolExecutor(cfg.num_jobs)
     optimizer = Optimizer(dimensions=model.get_bounds(),
                           **cfg.optimizer_opts)
     # initial design (random)
@@ -36,7 +40,7 @@ def optimize_model(model,cfg):
     x = optimizer.ask(n_points=cfg.num_initial)
     print("Evaluating %d initial points." % len(x), end='', flush=True)
     t0 = time.perf_counter()
-    y = Parallel(n_jobs=cfg.num_jobs)(delayed(model.fitness)(v) for v in x)  # evaluate points in parallel
+    y = list(ex.map(model.fitness, x))  # evaluate points in parallel
     t1 = time.perf_counter()
     print(" Complete in %.3f seconds" % (t1-t0))
     print("Teaching initial points.", end='', flush=True)
@@ -50,7 +54,7 @@ def optimize_model(model,cfg):
     line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
     log.write(",".join(line)+"\n")
     outname = "Iterations/best%d.fds" % 0
-    model.write_fds_file(outname,model.template,Xi)
+    model.write_fds_file(outname,Xi)
     for i in range(cfg.max_iter): 
         print("Asking for points.", end='', flush=True)
         t0 = time.perf_counter()
@@ -59,7 +63,7 @@ def optimize_model(model,cfg):
         print(" Complete in %.3f seconds" % (t1-t0))
         print("Evaluating %d  points." % len(x), end='', flush=True)
         t0 = time.perf_counter()
-        y = Parallel(n_jobs=cfg.num_jobs)(delayed(model.fitness)(v) for v in x)  # evaluate points in parallel
+        y = list(ex.map(model.fitness, x))  # evaluate points in parallel  
         t1 = time.perf_counter()
         print(" Complete in %.3f seconds" % (t1-t0))
         print("Teaching points.", end='', flush=True)
@@ -73,12 +77,12 @@ def optimize_model(model,cfg):
         line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
         log.write(",".join(line)+"\n")
         outname = "Iterations/best%d.fds" % (i+1)
-        model.write_fds_file(outname,model.template,Xi)
+        model.write_fds_file(outname,Xi)
 
     log.close
     ind = np.argmin(optimizer.yi)
     outname = "best.fds"
-    model.write_fds_file(outname,model.template,optimizer.Xi[ind])
+    model.write_fds_file(outname,optimizer.Xi[ind])
     print(optimizer.Xi[ind],optimizer.yi[ind])  # print the best objective found 
     dump(optimizer, 'result.gz', compress=9)
     return
@@ -111,10 +115,7 @@ def main():
     print("initializing")
     model = initialize_model(cfg)
     print("optimizing")
-    try:
-        optimize_model(model,cfg)
-    except Exception as e:
-        print(e)
+    optimize_model(model,cfg)
     print("done")
 
 

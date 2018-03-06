@@ -5,38 +5,41 @@ import copy
 import subprocess
 from multiprocessing import Lock
 from config import Config
+from jinja2 import Template
 import sys
 
 
 class Model:
-     def __init__(self,exp_data,params,simulation,fds_command,template):
+     def __init__(self,exp_data,params,simulation,fds_command,template,data_weights=None):
          self.exp_data = exp_data
          self.params = params
          self.simulation = simulation
+         self.data_weights = data_weights
          self.num_fitness = 0
-         self.template =template
+         #self.template = Template(template)
+         self.template = template
          self.points   = []
          self.save_fitness  = []
+         self.save_data  = []
          self.fds_command = fds_command
+         self.tempdir=os.getcwd()+"/Work/"
 
-     def write_fds_file(self,outname,template,x):
+     def write_fds_file(self,outname,x):
         f=open(outname,"w")
-        outfile=copy.deepcopy(template)
-        for m,line in enumerate(outfile):
-            for n,var in enumerate(x):
-                varname = "$%s" % (self.params[n][0])
-                outfile[m]=outfile[m].replace(varname,str(var))
+        template=Template(self.template)
+        variables = {self.params[n][0]: var for n,var in enumerate(x)}
+        outfile = template.render(**variables)
         f.writelines(outfile)
         f.close() 
 
      def run_fds(self,x):
         cwd = os.getcwd()
-        tempfile.tempdir=cwd
+        tempfile.tempdir=self.tempdir
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
-        with tempfile.TemporaryDirectory(prefix="Work/Cone_") as pwd:
+        with tempfile.TemporaryDirectory(prefix="Cone_") as pwd:
             os.chdir(pwd)
-            self.write_fds_file("cone.fds",self.template,x)
+            self.write_fds_file("cone.fds",x)
             devnull = open(os.devnull, 'w')
             proc = subprocess.Popen([self.fds_command,'cone.fds'],
                                     env = my_env,
@@ -60,6 +63,7 @@ class Model:
              
              
      def fitness(self, x):
+         fit=0
          with Lock():
             self.num_fitness += 1
          x=np.reshape(x,len(self.params))
@@ -80,7 +84,7 @@ class Model:
         Nk = len(exp_data)
         for key,(etime,edata) in exp_data.items():
             sdata = sim_data[key]
-            diff = np.mean(np.abs((edata-sdata)))
+            diff = np.mean((edata-sdata)**2)/np.var(edata)
             fitness += 1.0/Nk * diff
         return fitness
 
@@ -100,7 +104,7 @@ if __name__ == "__main__":
                         params=cfg.variables,
                         simulation=cfg.simulation,
                         fds_command=cfg.fds_command,
-                        template=open(cfg.fname,"r").readlines())
+                        template=open(cfg.fname,"r").read())
     x=[np.mean(x) for x in model.get_bounds()]
     fit = model.fitness(x)
     print(fit)
