@@ -10,7 +10,7 @@ import sys
 
 
 class Model:
-     def __init__(self,exp_data,params,simulation,fds_command,template,data_weights=None):
+     def __init__(self,exp_data,params,simulation,fds_command,template,data_weights):
          self.exp_data = exp_data
          self.params = params
          self.simulation = simulation
@@ -84,7 +84,8 @@ class Model:
         Nk = len(exp_data)
         for key,(etime,edata) in exp_data.items():
             sdata = sim_data[key]
-            diff = np.mean((edata-sdata)**2)/np.var(edata)
+            weight = self.data_weights[key]
+            diff = weight*np.mean((edata-sdata)**2)/np.var(edata)
             fitness += 1.0/Nk * diff
         return fitness
 

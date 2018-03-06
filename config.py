@@ -21,7 +21,7 @@ class Config:
     exp_data    = {}
     simulation  = {}
     experiment  = {}
-    objective   = {}
+    objective_func = "RMSE"
     data_weights = None
     fname       = None
     fds_command = None
@@ -39,7 +39,24 @@ class Config:
         self.parse_input(fname)
         self.proc_input()
         self.fname = fname
-        
+
+    def _proc_input(self):
+        if set(self.experiment) != set(self.simulation):
+            print("Keys for  simulation and experiment need to be the same:")
+            print(set(self.experiment).symmetric_difference(set(self.simulation)))
+            sys.exit(0)
+        if self.data_weights:
+            if set(self.data_weights) != set(self.simulation):
+                print("Need to define weights for all variables in 'experiment' and 'simulation':")
+                print(set(self.data_weights).symmetric_difference(set(self.simulation)))
+                sys.exit(0)
+        if not self.data_weights:
+            self.data_weights={}
+            for key in self.experiment:
+                self.data_weights[key]=1.0
+
+
+
 
     def parse_input(self,fname):
         lines=open(fname,"r").read()
@@ -71,6 +88,12 @@ class Config:
         self.optimizer_opts["acq_optimizer_kwargs"]["n_restarts_optimizer"]=self.num_jobs
         self.fds_command=config.get("fds_command","fds") 
         self.optimizer_opts=config.get("optimizer",self.optimizer_opts)
+        obj = config.get("objective",None)
+        if obj:
+            self.objective_func = obj.get("objective_func","RMSE")
+            self.data_weights   = obj.get("data_weights",None)
+        self._proc_input()
+
 
 
     def proc_input(self):

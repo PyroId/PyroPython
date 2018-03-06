@@ -22,13 +22,13 @@ def initialize_model(cfg):
                   params=cfg.variables,
                   simulation=cfg.simulation,
                   fds_command=cfg.fds_command,
-                  template=open(cfg.fname,"r").read())
+                  template=open(cfg.fname,"r").read(),
+                  data_weights=cfg.data_weights)
     return model
 
 
 
 def optimize_model(model,cfg):
-
     ex = ProcessPoolExecutor(cfg.num_jobs)
     optimizer = Optimizer(dimensions=model.get_bounds(),
                           **cfg.optimizer_opts)
