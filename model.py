@@ -19,8 +19,6 @@ class Model:
          #self.template = Template(template)
          self.template = template
          self.points   = []
-         self.save_fitness  = []
-         self.save_data  = []
          self.fds_command = fds_command
          self.tempdir=os.getcwd()+"/Work/"
 
@@ -64,8 +62,6 @@ class Model:
              
      def fitness(self, x):
          fit=0
-         with Lock():
-            self.num_fitness += 1
          x=np.reshape(x,len(self.params))
          T,data = self.run_fds(x)
          Fi={}
@@ -74,9 +70,6 @@ class Model:
              etime,edata = self.exp_data[key] 
              Fi[key]=np.interp(etime,T,F,left=0,right=0)
          fit = self.fitnessfunc(self.exp_data,Fi)
-         with Lock():
-             self.save_fitness.append(fit)
-             self.points.append(x)
          return fit 
 
      def fitnessfunc(self,exp_data,sim_data):
