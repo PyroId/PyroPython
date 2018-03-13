@@ -26,10 +26,6 @@ def initialize_model(cfg):
                   data_weights=cfg.data_weights)
     return model
 
-def evaluate_model(model,x):
-    return list(ex.map(model.fitness, x))
-
-def ask_()
 
 def optimize_model(model,cfg):
     ex = ProcessPoolExecutor(cfg.num_jobs)
@@ -43,7 +39,7 @@ def optimize_model(model,cfg):
     x = optimizer.ask(n_points=cfg.num_initial)
     print("Evaluating %d initial points." % len(x), end='', flush=True)
     t0 = time.perf_counter()
-    y =   # evaluate points in parallel
+    y =  list(ex.map(model.fitness, x)) # evaluate points in parallel
     t1 = time.perf_counter()
     print(" Complete in %.3f seconds" % (t1-t0))
     print("Teaching initial points.", end='', flush=True)
@@ -114,9 +110,9 @@ def proc_commandline():
     return cfg
 
 def create_dirs():
-    ensure_dir("Best")
-    ensure_dir("Work")
-    ensure_dir("Iterations")
+    ensure_dir("Best/")
+    ensure_dir("Work/")
+    ensure_dir("Iterations/")
     
 def main():
     cfg = proc_commandline()
