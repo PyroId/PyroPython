@@ -7,7 +7,7 @@ Created on Tue Feb  6 09:49:36 2018
 import sys
 import yaml as y
 from pandas import read_csv
-from numpy import array,newaxis
+from numpy import array,newaxis,squeeze
 from scipy import signal
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern,WhiteKernel,RBF
@@ -31,20 +31,29 @@ class Config:
                       "n_initial_points":      100,
                       "acq_optimizer_kwargs":  {"n_points": 10000, "n_restarts_optimizer": 5,
                                               "n_jobs": 1},
-                      "acq_func_kwargs":       {"xi": 0.05, "kappa": 0.96}
+                      "acq_func_kwargs":       {"xi": 0.01, "kappa": 1.96}
                       };
     filtering_options= {}
 
     def  __init__(self, fname):
         self.parse_input(fname)
-        self.proc_input()
+        self._proc_input()
         self.fname = fname
 
     def _proc_input(self):
-        if set(self.experiment) != set(self.simulation):
-            print("Keys for  simulation and experiment need to be the same:")
-            print(set(self.experiment).symmetric_difference(set(self.simulation)))
-            sys.exit(0)
+        for key in self.simulation:
+            if not key in self.experiment:
+                sys.exit("No experimental data for variable %s" % key)
+        for key in self.experiment:
+            if not key in self.simulation:
+                sys.exit("No simulation data for variable %s" % key)
+        for key,(fname,dname,conversion_factor) in self.experiment.items():
+            tmp=read_csv(fname,header=1,encoding = "latin-1",index_col=False)
+            tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
+            tmp=tmp.dropna(axis=1,how='any')
+            dat = self.filter(array(tmp['Time']),array(tmp[dname]))
+            self.raw_data[key]=(array(tmp['Time']),array(tmp[dname]*conversion_factor))
+            self.exp_data[key]=(array(tmp['Time']),array(dat*conversion_factor))
         if self.data_weights:
             if set(self.data_weights) != set(self.simulation):
                 print("Need to define weights for all variables in 'experiment' and 'simulation':")
@@ -54,8 +63,6 @@ class Config:
             self.data_weights={}
             for key in self.experiment:
                 self.data_weights[key]=1.0
-
-
 
 
     def parse_input(self,fname):
@@ -94,30 +101,14 @@ class Config:
             self.data_weights   = obj.get("data_weights",None)
         self._proc_input()
 
-
-
-    def proc_input(self):
-        for key in self.simulation:
-            if not key in self.experiment:
-                sys.exit("No experimental data for variable %s" % key)
-        for key in self.experiment:
-            if not key in self.simulation:
-                sys.exit("No simulation data for variable %s" % key)
-        for key,(fname,dname,conversion_factor) in self.experiment.items():
-            tmp=read_csv(fname,header=1,encoding = "latin-1",index_col=False)
-            tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
-            tmp=tmp.dropna(axis=1,how='any')
-            dat = self.filter(array(tmp['Time']),array(tmp[dname]))
-            self.raw_data[key]=(array(tmp['Time']),array(tmp[dname]*conversion_factor))
-            self.exp_data[key]=(array(tmp['Time']),array(dat*conversion_factor))
     
     def filter(self, x,y):
         kernel =  1.0*Matern(length_scale=20.0, length_scale_bounds=(1e-1, 1000.0),nu=2.5) \
                   + WhiteKernel(noise_level=5.0, noise_level_bounds=(1e-1, 1000.0))
         gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=0,alpha=0.0)
         gp.fit(x[:,newaxis],y[:,newaxis])
-        print(gp.kernel_)
-        return gp.predict(x[:,newaxis])
+        return squeeze(gp.predict(x[:,newaxis]))
+
 if __name__=="__main__":
     fname=sys.argv[1]
     cfg = Config(fname)
