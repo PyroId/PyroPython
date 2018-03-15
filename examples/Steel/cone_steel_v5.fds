@@ -1,0 +1,260 @@
+Project: EU-FibreShip
+Author:  Timo Korhonen
+VTT Technical Research Centre of Finland 2018
+
+* Plain 3.2mm thick steel plate in cone calorimeter.
+* Model v4:
+  - 3.2mm steel, front side emissivity is changing according to temperature
+    How? Make two steel MATL and make steel_1 => steel_2 reaction with some
+    REFERENCE_TEMPERATURE
+    PYROLYSIS_RANGE (default 80 C or K)
+    
+* Model
+   3.2 mm steel, fron emissivity with two steels (eps1 => eps2 reaction)
+   2.0 mm KaowoolAluminumAirGap: T^3 factor = 1/3 Kaowool64 case (aluminum emissivity)
+          (linear part is mainly due to air conductivity, t3 part is radiation part)
+  43.0 mm is Kaowool, own fit:
+    k(T, kelvin) =  a + b*T + c*T3
+    a = 0.01, b= 8.00E-05, c= 1.20E-10
+    (=> k(20C)=0.036, air k(20C)=0.0251)
+   Kaowool_cp = 1.08, Kaowool_rho=80
+
+ Teräs, emissiivisyys: eps1=0.51, eps2=0.60, T_ref=375C,
+                       Rate_ref=0.000595, heat_rate=5.0 (ei varioitu)
+ Kaowool: cp=1.08, rho=80, k0C=0.0467, k=150C=0.049 k300C=0.0666, K500C=0.01267,
+
+=====================
+PyroPython input file
+=====================
+========================================================================================
+#start_config
+#
+# number of parallel jobs (optional, default 1)
+num_jobs: 36
+# maximum number of iterations  (optional, default 50)
+max_iter: 10
+# How many points explored per iteration  (optional, default 1)
+num_points: 36  
+# Number of points in initial design  (optional, default 1)
+num_initial: 36
+#location of fds executable (absolute path).  (required)
+fds_command:  /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
+#
+# Variables to be identified (required) 
+# Format is  VARNAME: [min max]
+# VARNAME is used to identify the variable in the fds input.
+# The *min* and *max* give the bounds for the variable
+# ref_rate 0.000595, ref_temp 375, eps1=0.51, eps2=0.6
+# kao_cp=1.08, kao_rho=80
+variables:         
+          STEEL1_EPSILON: [ 0.45, 0.55]  
+          STEEL2_EPSILON: [ 0.55, 0.75]  
+          REF_TEMP:    [300,400]
+          REF_RATE:    [0.0004,0.0008]
+#
+# simulation - simulation outputfiles
+# entries in format:
+#   Var_name: output_file, col name, conversion factor
+# Var_name is used to match the simulation output and experimental data
+# output_file gives the field where this output is located int
+# col name gives the column name in output file
+# conversion factor  factor for converting from e.g. g to kg (i.e, c in  y=c*x)
+# experiment - experimental data in same format
+#   Var_name: data_file, col name, conversion factor
+simulation:
+    TTC1: ['cone_steel_v5_devc.csv','T_b45mmTC1',1.0]
+    TTC2: ['cone_steel_v5_devc.csv','T_b13mmTC2',1.0]
+experiment:
+    TTC1: ['SteelReference.csv','T_b45mmTC1',1.0]
+    TTC2: ['SteelReference.csv','T_b13mmTC2',1.0]
+#
+# The following fields are optional:
+# Options for objective function
+obejctive:
+    type: "RMSE" # TODO: add more objectivefunctions
+    weights: {'TTC1': 1.0, 'TTC2': 1.0}
+#
+# Information for plot_comp.py. Note that the results of the best run need to be in the Best/
+plotting:
+    TTC1: {ylabel: "TC1 ($^\\circ$C)", xlabel: "Time (s)"}
+    TTC2: {ylabel: "TC2 ($^\\circ$C)", xlabel: "Time (s)"}
+#
+# These are options for the optimizer class in scikit-optimize you can
+# safely ignore these or [https://scikit-optimize.github.io/#skopt.Optimizer]
+optimizer:
+   base_estimator: 'ET'
+   acq_func: 'LCB'
+   acq_optimizer: 'auto'
+   acq_optimizer_kwargs: {n_points: 10000, n_restarts_optimizer": 5,n_jobs: 1}
+   acq_func_kwargs: {xi: 0.05, kappa: 0.20}
+#
+#end_config
+========================================================================================
+
+
+&HEAD CHID='cone_steel_v5', TITLE='Stainless steel 3.2mm at 25 kW/m2' /
+
+&MESH IJK=6,6,8, XB=-0.15,0.15,-0.15,0.15,-0.1,0.3 /
+
+&TIME T_END=897., WALL_INCREMENT=1, DT=0.05 /
+&DUMP DT_DEVC=1.0 /
+
+&MISC TMPA=23.31,/
+&RADI NUMBER_RADIATION_ANGLES=100 /
+
+&MATL ID='StainlessSteel',
+      CONDUCTIVITY_RAMP='StSteel_EC3_KS',
+      SPECIFIC_HEAT_RAMP='StSteel_E3_CP',
+      EMISSIVITY=       {{STEEL1_EPSILON}} ,
+      DENSITY=7850.0,
+      N_REACTIONS= 1,
+      MATL_ID(1,1)= 'HotStainlessSteel'
+      NU_MATL(1,1)= 1.0,
+      REFERENCE_TEMPERATURE(1)= {{REF_TEMP}} ,
+      REFERENCE_RATE(1)=        {{REF_RATE}} ,
+      HEATING_RATE(1)=5.0,
+      HEAT_OF_REACTION=0.0, /
+
+&MATL ID='HotStainlessSteel',
+      CONDUCTIVITY_RAMP='StSteel_EC3_KS',
+      SPECIFIC_HEAT_RAMP='StSteel_E3_CP',
+      EMISSIVITY=       {{STEEL2_EPSILON}} ,
+      DENSITY=7850.0 /
+
+&MATL ID='Kaowool',
+      CONDUCTIVITY_RAMP='Kaowool_KS',
+      SPECIFIC_HEAT=   1.08 ,
+      DENSITY=         80.0 /
+      CP =1.040, rho=64
+
+&MATL ID='KaoTop',
+      CONDUCTIVITY_RAMP='KaoTop_KS',
+      SPECIFIC_HEAT=   1.08 ,
+      DENSITY=         80.0 /
+      CP =1.040, rho=64
+
+&SURF ID='SteelKao', COLOR='BLACK', BACKING='VOID', TMP_BACK=23.0,
+      EMISSIVITY_BACK= 0.95 ,
+      HEAT_TRANSFER_COEFFICIENT_BACK= 3.0 ,
+      MATL_ID='StainlessSteel','KaoTop','Kaowool',
+      THICKNESS=0.0032,0.0020,0.0430,
+      STRETCH_FACTOR=1.0,1.0,1.0, CELL_SIZE_FACTOR=1.0,
+      EXTERNAL_FLUX=25.0,  / 45mm kaowoolia
+
+
+
+&VENT XB=-0.05,0.05,-0.05,0.05,-0.1,-0.1, SURF_ID='SteelKao' /
+
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='WALL TEMPERATURE', ID='T_surf' /
+&DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL TEMPERATURE', DEPTH=-0.04505, ID='T_b45mmTC1' / steel
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL TEMPERATURE', DEPTH=-0.039, ID='T_b39mm' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL TEMPERATURE', DEPTH=-0.026, ID='T_b26mm' /
+&DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL TEMPERATURE', DEPTH=-0.013, ID='T_b13mmTC2' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='BACK WALL TEMPERATURE', ID='T_back' /
+
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL DEPTH', DEPTH=-0.04505, ID='x_b45mmTC1' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL DEPTH', DEPTH=-0.039, ID='x_b39mm' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL DEPTH', DEPTH=-0.026, ID='x_b26mm' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='INSIDE WALL DEPTH', DEPTH=-0.013, ID='x_b13mmTC2' /
+DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='WALL THICKNESS', ID='D_surf' /
+DEVC XYZ=0.0,0.0,-0.075, QUANTITY='TEMPERATURE', ID='T_gas1' /
+DEVC XYZ=0.0,0.0,-0.025, QUANTITY='TEMPERATURE', ID='T_gas2' /
+DEVC XYZ=0.0,0.0, 0.025, QUANTITY='TEMPERATURE', ID='T_gas3' /
+DEVC XYZ=0.0,0.0, 0.075, QUANTITY='TEMPERATURE', ID='T_gas4' /
+
+&DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='EMISSIVITY', ID='Eps_steel', DEPTH=0.001 /
+&DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='SOLID DENSITY', MATL_ID='StainlessSteel', ID='Dens_steel1', DEPTH=0.001 /
+&DEVC XYZ=0.0,0.0,-0.10, IOR=3, QUANTITY='SOLID DENSITY', MATL_ID='HotStainlessSteel', ID='Dens_steel2', DEPTH=0.001 /
+
+oma a+b*T+c*T3 fitti Kaowool64:
+&RAMP ID='Kaowool_KS', T=       0        , F=   0.0319   /
+&RAMP ID='Kaowool_KS', T=       200      , F=   0.0479   /
+&RAMP ID='Kaowool_KS', T=       400      , F=   0.0639   /
+&RAMP ID='Kaowool_KS', T=       600      , F=   0.0799   /
+&RAMP ID='Kaowool_KS', T=       800      , F=   0.0960   /
+&RAMP ID='Kaowool_KS', T=       1000     , F=   0.1120   /
+&RAMP ID='Kaowool_KS', T=       1200     , F=   0.1281   /
+&RAMP ID='Kaowool_KS', T=       1400     , F=   0.1442   /
+&RAMP ID='Kaowool_KS', T=       1600     , F=   0.1603   /
+
+oma t3 fitti, nyt c kolmasosa (alumiinia 0.3, kao_orig 0.9)
+Ei eroa eps puolet fittiin (t3 vaikuttaa vasta korkeilla arvoilla)
+&RAMP ID='KaoTop_KS', T=        0        , F=   0.0319   /
+&RAMP ID='KaoTop_KS', T=        200      , F=   0.0479   /
+&RAMP ID='KaoTop_KS', T=        400      , F=   0.0639   /
+&RAMP ID='KaoTop_KS', T=        600      , F=   0.0799   /
+&RAMP ID='KaoTop_KS', T=        800      , F=   0.0959   /
+&RAMP ID='KaoTop_KS', T=        1000     , F=   0.1119   /
+&RAMP ID='KaoTop_KS', T=        1200     , F=   0.1279   /
+&RAMP ID='KaoTop_KS', T=        1400     , F=   0.1440   /
+&RAMP ID='KaoTop_KS', T=        1600     , F=   0.1600   /
+
+
+% Air (Incropera & deWitt: Fundamentals of Heat and Mass Transfer, Fifth
+% Edition, John Wiley and Sons, U.S.A. 2002)
+T_cp_air  = [0 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 ...
+             850 900 950 1000 1100 1200 1300 1400 1500 2000]; 
+Y_cp_air = [1032 1032 1012 1007 1006 1007 1009 1014 1021 1030 1040 1051 ...
+            1063 1075 1087 1099 1110 1121 1131 1141 1159 1175 1189 1207 ...
+            1230 1337]; 
+T_rho_air = [0 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 ...
+             850 900 950 1000 1100 1200 1300 1400 1500 2000]; 
+Y_rho_air = [3.5562 3.5562 2.3364 1.7458 1.3947 1.1614 0.995 0.8711 0.774 ...
+             0.6964 0.6329 0.5804 0.5356 0.4975 0.4643 0.4354 0.4097 0.3868 ...
+             0.3666 0.3482 0.3166 0.2902 0.2679 0.2488 0.2322 0.1741];
+T_lam_air = [0 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 ...
+             850 900 950 1000 1100 1200 1300 1400 1500 2000]; 
+Y_lam_air = [0.00934 0.00934 0.0138 0.0181 0.0223 0.0263 0.03 0.0338 0.0373 ...
+             0.0407 0.0439 0.0469 0.0497 0.0524 0.0549 0.0573 0.0596 0.062 ...
+             0.0643 0.0667 0.0715 0.0763 0.082 0.091 0.1 0.137];  
+
+EC3 stainless steel (ks has linear temp.dep.)                           
+&RAMP ID='StSteel_EC3_KS', T=   0        , F=   14.60    /
+&RAMP ID='StSteel_EC3_KS', T=   200      , F=   14.73    /
+&RAMP ID='StSteel_EC3_KS', T=   400      , F=   14.85    /
+&RAMP ID='StSteel_EC3_KS', T=   600      , F=   14.98    /
+&RAMP ID='StSteel_EC3_KS', T=   800      , F=   15.11    /
+&RAMP ID='StSteel_EC3_KS', T=   1000     , F=   15.24    /
+&RAMP ID='StSteel_EC3_KS', T=   1200     , F=   15.36    /
+&RAMP ID='StSteel_EC3_KS', T=   1400     , F=   15.49    /
+&RAMP ID='StSteel_EC3_KS', T=   1600     , F=   15.62    /
+
+EC3 stainless steel     C               kJ/kg.K 
+&RAMP ID='StSteel_E3_CP', T=    0        , F=   0.4500   /
+&RAMP ID='StSteel_E3_CP', T=    50       , F=   0.4633   /
+&RAMP ID='StSteel_E3_CP', T=    100      , F=   0.4752   /
+&RAMP ID='StSteel_E3_CP', T=    150      , F=   0.4859   /
+&RAMP ID='StSteel_E3_CP', T=    200      , F=   0.4954   /
+&RAMP ID='StSteel_E3_CP', T=    250      , F=   0.5039   /
+&RAMP ID='StSteel_E3_CP', T=    300      , F=   0.5114   /
+&RAMP ID='StSteel_E3_CP', T=    350      , F=   0.5181   /
+&RAMP ID='StSteel_E3_CP', T=    400      , F=   0.5240   /
+&RAMP ID='StSteel_E3_CP', T=    450      , F=   0.5293   /
+&RAMP ID='StSteel_E3_CP', T=    500      , F=   0.5340   /
+&RAMP ID='StSteel_E3_CP', T=    550      , F=   0.5383   /
+&RAMP ID='StSteel_E3_CP', T=    600      , F=   0.5422   /
+&RAMP ID='StSteel_E3_CP', T=    650      , F=   0.5459   /
+&RAMP ID='StSteel_E3_CP', T=    700      , F=   0.5494   /
+&RAMP ID='StSteel_E3_CP', T=    750      , F=   0.5528   /
+&RAMP ID='StSteel_E3_CP', T=    800      , F=   0.5564   /
+&RAMP ID='StSteel_E3_CP', T=    850      , F=   0.5600   /
+&RAMP ID='StSteel_E3_CP', T=    900      , F=   0.5640   /
+&RAMP ID='StSteel_E3_CP', T=    950      , F=   0.5683   /
+&RAMP ID='StSteel_E3_CP', T=    1000     , F=   0.5730   /
+&RAMP ID='StSteel_E3_CP', T=    1050     , F=   0.5783   /
+&RAMP ID='StSteel_E3_CP', T=    1100     , F=   0.5842   /
+&RAMP ID='StSteel_E3_CP', T=    1150     , F=   0.5909   /
+&RAMP ID='StSteel_E3_CP', T=    1200     , F=   0.5985   /
+&RAMP ID='StSteel_E3_CP', T=    1250     , F=   0.6070   /
+&RAMP ID='StSteel_E3_CP', T=    1300     , F=   0.6166   /
+&RAMP ID='StSteel_E3_CP', T=    1350     , F=   0.6273   /
+&RAMP ID='StSteel_E3_CP', T=    1400     , F=   0.6393   /
+
+&VENT MB='ZMAX', SURF_ID='OPEN' /
+&VENT MB='XMIN', SURF_ID='OPEN' /
+&VENT MB='XMAX', SURF_ID='OPEN' /
+&VENT MB='YMIN', SURF_ID='OPEN' /
+&VENT MB='YMAX', SURF_ID='OPEN' /
+
+
+&TAIL /
