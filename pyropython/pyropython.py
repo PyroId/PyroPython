@@ -13,7 +13,7 @@ from itertools import product
 import time
 import sys
 import argparse
-from config import Config
+import config as cfg
 import pickle
 from utils import ensure_dir
 
@@ -86,7 +86,7 @@ def optimize_model(model,cfg):
     dump(optimizer, 'result.gz', compress=9)
     return
     
-def proc_commandline():
+def proc_commandline(cfg):
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",help="Input file name")
     parser.add_argument("-v", "--verbosity", type=int,
@@ -100,7 +100,7 @@ def proc_commandline():
     parser.add_argument("-p", "--num_points", type=int,
                         help="number of points per iteration")
     args=parser.parse_args()
-    cfg = Config(args.fname)
+    cfg.read_config(args.fname)
     if args.num_jobs:
         cfg.num_jobs=args.num_jobs
     if args.max_iter:
@@ -115,18 +115,13 @@ def create_dirs():
     ensure_dir("Iterations/")
     
 def main():
-    cfg = proc_commandline()
+    proc_commandline(cfg)
     print("initializing")
     create_dirs()
     model = initialize_model(cfg)
     print("optimizing")
     optimize_model(model,cfg)
     print("done")
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
