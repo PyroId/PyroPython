@@ -5,7 +5,7 @@
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern,WhiteKernel,RBF
-
+from numpy import array,newaxis,squeeze
 
 def gp_filter(x,y):
     kernel =  1.0*Matern(length_scale=20.0, length_scale_bounds=(1e-1, 1000.0),nu=2.5) \

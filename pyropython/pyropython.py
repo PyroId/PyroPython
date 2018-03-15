@@ -5,7 +5,7 @@ from skopt.space import Real
 from concurrent.futures import ProcessPoolExecutor
 # example objective taken from skopt
 from skopt.benchmarks import branin
-from model import Model
+from .model import Model 
 import numpy as np
 from pandas import read_csv
 from scipy import signal
@@ -13,16 +13,16 @@ from itertools import product
 import time
 import sys
 import argparse
-import config as cfg
+from . import config as cfg
 import pickle
-from utils import ensure_dir
+from .utils import ensure_dir
 
 def initialize_model(cfg):
     model = Model(exp_data=cfg.exp_data,
                   params=cfg.variables,
                   simulation=cfg.simulation,
                   fds_command=cfg.fds_command,
-                  template=open(cfg.fname,"r").read(),
+                  templates=cfg.templates,
                   data_weights=cfg.data_weights)
     return model
 

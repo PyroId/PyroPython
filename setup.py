@@ -8,4 +8,7 @@ setup(name='pyropython',
       author_email='topi.sikanen@vtt.fi',
       license='VTT',
       packages=['pyropython'],
+      entry_points = {
+        "console_scripts": ['pyropython = pyropython.pyropython:main']
+      },
       zip_safe=False)
