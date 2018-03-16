@@ -1,6 +1,6 @@
 from skopt import Optimizer,dump
 from skopt.learning import GaussianProcessRegressor
-from skopt.space import Real
+from shutil import copytree
 #from sklearn.externals.joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor
 # example objective taken from skopt
@@ -27,61 +27,66 @@ def initialize_model(cfg):
     return model
 
 
+
 def optimize_model(model,cfg):
     ex = ProcessPoolExecutor(cfg.num_jobs)
     optimizer = Optimizer(dimensions=model.get_bounds(),
                           **cfg.optimizer_opts)
+    # Convenience functions
+    def evaluate(x):
+        print("Evaluating %d points." % len(x), end='', flush=True)
+        t0 = time.perf_counter()
+        out =  list(ex.map(model.fitness, x)) # evaluate points in parallel
+        t1 = time.perf_counter()
+        y,pwd = zip(*out)
+        print(" Complete in %.3f seconds" % (t1-t0))
+        return y,pwd
+    def ask(num_points):
+        print("Asking for points.", end='', flush=True)
+        t0 = time.perf_counter()
+        x = optimizer.ask(n_points=num_points)  # x is a list of n_points points
+        t1 = time.perf_counter()
+        print(" Complete in %.3f seconds" % (t1-t0))
+        return x
+    def tell(x,y):
+        print("Teaching initial points.", end='', flush=True)
+        t0 = time.perf_counter()
+        optimizer.tell(x, y)
+        t1 = time.perf_counter()
+        print(" Complete in %.3f seconds" % (t1-t0))
+
     # initial design (random)
     log=open("log.csv","w",buffering=1)
     header = ",".join(["Iteration"]+[name for name,bounds in cfg.variables]+["Objective"])
     log.write(header+"\n")
     print("picking initial points")
-    x = optimizer.ask(n_points=cfg.num_initial)
-    print("Evaluating %d initial points." % len(x), end='', flush=True)
-    t0 = time.perf_counter()
-    y =  list(ex.map(model.fitness, x)) # evaluate points in parallel
-    t1 = time.perf_counter()
-    print(" Complete in %.3f seconds" % (t1-t0))
-    print("Teaching initial points.", end='', flush=True)
-    t0 = time.perf_counter()
-    optimizer.tell(x, y)
-    t1 = time.perf_counter()
-    print(" Complete in %.3f seconds" % (t1-t0))
+    x = ask(cfg.num_initial)
+    y,pwd = evaluate(x)
     ind = np.argmin(y)
     yi = y[ind]
     Xi = x[ind]
     line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
     log.write(",".join(line)+"\n")
-    outname = "Iterations/best%d.fds" % 0
-    model.write_fds_file(outname,Xi)
+    # Save the  output files from the best run
+    copytree(pwd[ind], "Best")
+    y_best = yi
+    # Main iteration loop  
     for i in range(cfg.max_iter): 
-        print("Asking for points.", end='', flush=True)
-        t0 = time.perf_counter()
-        x = optimizer.ask(n_points=cfg.num_points)  # x is a list of n_points points
-        t1 = time.perf_counter()
-        print(" Complete in %.3f seconds" % (t1-t0))
-        print("Evaluating %d  points." % len(x), end='', flush=True)
-        t0 = time.perf_counter()
-        y = list(ex.map(model.fitness, x))  # evaluate points in parallel  
-        t1 = time.perf_counter()
-        print(" Complete in %.3f seconds" % (t1-t0))
-        print("Teaching points.", end='', flush=True)
-        t0 = time.perf_counter()
-        optimizer.tell(x, y)
-        t1 = time.perf_counter()
-        print(" Complete in %.3f seconds" % (t1-t0))
+        tell(x,y)
+        x = ask(cfg.num_points)
+        y,pwd = evaluate(x)
         ind = np.argmin(y)
         yi = y[ind]
         Xi = x[ind]
         line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
         log.write(",".join(line)+"\n")
-        outname = "Iterations/best%d.fds" % (i+1)
-        model.write_fds_file(outname,Xi)
+        # Save the  output files from the best run
+        if y_best>yi:
+            copytree(pwd[ind], "Best")
+            y_best = yi
 
-    log.close
+    log.close()
     ind = np.argmin(optimizer.yi)
-    outname = "best.fds"
-    model.write_fds_file(outname,optimizer.Xi[ind])
     print(optimizer.Xi[ind],optimizer.yi[ind])  # print the best objective found 
     dump(optimizer, 'result.gz', compress=9)
     return
