@@ -2,9 +2,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from config import Config
-
-
+from . import config as cfg
 import argparse
 
 simulation_dir="Best"
@@ -22,7 +20,7 @@ def proc_commandline():
     args=parser.parse_args()
     simulation_dir=args.simulation_dir
     output_dir=args.output_dir
-    cfg = Config(args.fname)
+    cfg.read_config(args.fname)
     return cfg
 
 def plot_exp(cfg):
@@ -65,9 +63,12 @@ def plot_sim(cfg):
         plt.close()       
     return
 
-if __name__=="__main__":
+def main():
     cfg=proc_commandline()
     print(cfg.optimizer_opts)
     plot_exp(cfg)
     plot_sim(cfg)
     print(simulation_dir)
+
+if __name__=="__main__":
+    main()
