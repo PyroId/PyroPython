@@ -9,6 +9,7 @@ setup(name='pyropython',
       license='VTT',
       packages=['pyropython'],
       entry_points = {
-        "console_scripts": ['pyropython = pyropython.pyropython:main']
+        "console_scripts": ['pyropython = pyropython.pyropython:main',
+        					'plot_pyro = pyropython.plotting:main']
       },
       zip_safe=False)

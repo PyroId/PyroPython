@@ -1,6 +1,6 @@
 from skopt import Optimizer,dump
 from skopt.learning import GaussianProcessRegressor
-from shutil import copytree
+from distutils.dir_util import copy_tree
 #from sklearn.externals.joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor
 # example objective taken from skopt
@@ -29,9 +29,11 @@ def initialize_model(cfg):
 
 
 def optimize_model(model,cfg):
+    # these can perhaps be changed later
     ex = ProcessPoolExecutor(cfg.num_jobs)
     optimizer = Optimizer(dimensions=model.get_bounds(),
                           **cfg.optimizer_opts)
+
     # Convenience functions
     def evaluate(x):
         print("Evaluating %d points." % len(x), end='', flush=True)
@@ -49,7 +51,7 @@ def optimize_model(model,cfg):
         print(" Complete in %.3f seconds" % (t1-t0))
         return x
     def tell(x,y):
-        print("Teaching initial points.", end='', flush=True)
+        print("Teaching points.", end='', flush=True)
         t0 = time.perf_counter()
         optimizer.tell(x, y)
         t1 = time.perf_counter()
@@ -68,8 +70,12 @@ def optimize_model(model,cfg):
     line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
     log.write(",".join(line)+"\n")
     # Save the  output files from the best run
-    copytree(pwd[ind], "Best")
+    copy_tree(pwd[ind].name, "Best")
     y_best = yi
+    # Explicitly clean up temp direcotries
+    for p in pwd:
+        print(pwd)
+        p.cleanup() 
     # Main iteration loop  
     for i in range(cfg.max_iter): 
         tell(x,y)
@@ -82,9 +88,11 @@ def optimize_model(model,cfg):
         log.write(",".join(line)+"\n")
         # Save the  output files from the best run
         if y_best>yi:
-            copytree(pwd[ind], "Best")
+            copy_tree(pwd[ind].name, "Best")
             y_best = yi
-
+        # Explicitly clean up temp direcotries
+        for p in pwd:
+            p.cleanup() 
     log.close()
     ind = np.argmin(optimizer.yi)
     print(optimizer.Xi[ind],optimizer.yi[ind])  # print the best objective found 

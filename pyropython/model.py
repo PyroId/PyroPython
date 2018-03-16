@@ -36,7 +36,7 @@ class Model:
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
         pwd = tempfile.TemporaryDirectory(prefix="Cone_")
-        os.chdir(pwd)
+        os.chdir(pwd.name)
         devnull = open(os.devnull, 'w')
         for fname,template in self.templates:
             print(fname,self.fds_command)

@@ -44,7 +44,13 @@ def _proc_input(cfg):
     for fname in cfg['templates']:
         templates.append( (fname,open(fname,'r').read()) )
     for key,(fname,dname,conversion_factor) in experiment.items():
-        tmp=read_csv(fname,header=1,encoding = "latin-1",index_col=False)
+        tmp=read_csv(fname,header=1,
+                    encoding = "latin-1",
+                    index_col=False,
+                    comment="#",
+                    error_bad_lines=False,
+                    warn_bad_lines=True,
+                    skip_blank_lines=True)
         tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
         tmp=tmp.dropna(axis=1,how='any')
         dat = gp_filter(array(tmp['Time']),array(tmp[dname]))
