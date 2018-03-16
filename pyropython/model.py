@@ -4,27 +4,27 @@ import numpy as np
 import copy
 import subprocess
 from multiprocessing import Lock
-from config import Config
+from . import config as cfg
 from jinja2 import Template
 import sys
 
 
 class Model:
-     def __init__(self,exp_data,params,simulation,fds_command,template,data_weights):
+     def __init__(self,exp_data,params,simulation,fds_command,templates,data_weights):
          self.exp_data = exp_data
          self.params = params
          self.simulation = simulation
          self.data_weights = data_weights
          self.num_fitness = 0
          #self.template = Template(template)
-         self.template = template
+         self.templates = templates
          self.points   = []
          self.fds_command = fds_command
          self.tempdir=os.getcwd()+"/Work/"
 
-     def write_fds_file(self,outname,x):
+     def write_fds_file(self,outname,template,x):
         f=open(outname,"w")
-        template=Template(self.template)
+        template=Template(template)
         variables = {self.params[n][0]: var for n,var in enumerate(x)}
         outfile = template.render(**variables)
         f.writelines(outfile)
@@ -35,20 +35,21 @@ class Model:
         tempfile.tempdir=self.tempdir
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
-        with tempfile.TemporaryDirectory(prefix="Cone_") as pwd:
-            os.chdir(pwd)
-            self.write_fds_file("cone.fds",x)
-            devnull = open(os.devnull, 'w')
-            proc = subprocess.Popen([self.fds_command,'cone.fds'],
+        pwd = tempfile.TemporaryDirectory(prefix="Cone_")
+        os.chdir(pwd)
+        devnull = open(os.devnull, 'w')
+        for fname,template in self.templates:
+            print(fname,self.fds_command)
+            self.write_fds_file(fname,template,x)
+            proc = subprocess.Popen([self.fds_command,fname],
                                     env = my_env,
                                     stdout=devnull,
                                     stderr=devnull)
             proc.wait()
-
-            devnull.close()
-            Time,data = self.read_fds_output()
-            os.chdir(cwd)
-            return Time,data
+        devnull.close()
+        Time,data = self.read_fds_output()
+        os.chdir(cwd)
+        return Time,data,pwd
 
      def read_fds_output(self):
         data={}
@@ -63,14 +64,14 @@ class Model:
      def fitness(self, x):
          fit=0
          x=np.reshape(x,len(self.params))
-         T,data = self.run_fds(x)
+         T,data,pwd = self.run_fds(x)
          Fi={}
          for key,d in data.items():
              T,F = d
              etime,edata = self.exp_data[key] 
              Fi[key]=np.interp(etime,T,F,left=0,right=0)
          fit = self.fitnessfunc(self.exp_data,Fi)
-         return fit 
+         return fit,pwd 
 
      def fitnessfunc(self,exp_data,sim_data):
         fitness = 0.0
@@ -93,7 +94,7 @@ def main():
 if __name__ == "__main__":
     main()
     fname=sys.argv[1]
-    cfg = Config(fname)
+    cfg.read_config(fname)
     model = Model(exp_data=cfg.exp_data,
                         params=cfg.variables,
                         simulation=cfg.simulation,
