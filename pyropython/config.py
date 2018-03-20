@@ -20,6 +20,7 @@ exp_data    = {}
 raw_data    = {}
 simulation  = {}
 experiment  = {}
+plots       = {}
 objective_func = "RMSE"
 data_weights = {}
 fds_command = "fds"
@@ -62,6 +63,7 @@ def _proc_input(cfg):
         line.setdefault("header",1)
         line.setdefault("filter_type","None")
         line.setdefault("filter_opts",None)
+        line.setdefault("gradient",False)
         
     for key,line in experiment.items():
         line.setdefault("ind_col_name","Time")
@@ -70,6 +72,7 @@ def _proc_input(cfg):
         line.setdefault("filter_type","GP")
         line.setdefault("filter_opts",None)
         line.setdefault("header",0)
+        line.setdefault("gradient",False)
         exp_data[key]= read_data(**line)
         tmp = dict(line)
         tmp["filter_type"]="None"
@@ -87,7 +90,7 @@ def _proc_input(cfg):
 
 def read_config(fname):
     global max_iter,num_jobs,num_points,num_initial,simulation,experiment,variables
-    global optimizer_opts,objective_func,data_weights,fds_command
+    global optimizer_opts,objective_func,data_weights,fds_command,plots
     lines=open(fname,"r").read()
     cfg = y.load(lines)
     # check sanity of input
@@ -101,6 +104,7 @@ def read_config(fname):
         sys.exit("Need to define templates.")   
     simulation = cfg['simulation']
     experiment = cfg['experiment']
+    plots = cfg['plots']
     variables  = list(cfg['variables'].items())
     max_iter=cfg.get("max_iter",50)
     num_jobs=cfg.get("num_jobs",-1)

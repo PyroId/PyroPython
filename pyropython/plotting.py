@@ -3,11 +3,11 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from . import config as cfg
-from .utils import read_data
+from .utils import read_data, ensure_dir
 import argparse
-
-simulation_dir="Best"
-output_dir="Figs"
+import os 
+simulation_dir="Best/"
+output_dir="Figs/"
 
 def proc_commandline():
     global simulation_dir,output_dir
@@ -43,10 +43,8 @@ def plot_exp(cfg):
 
 def read_fds_output(cfg):
         data={}
-        cwd = os.getcwd()
         for key,line in cfg.simulation.items():
-             os.chdir(simulation_dir)
-             T,F = read_data(**line) 
+             T,F = read_data(**line, cwd=simulation_dir) 
              data[key]=T,F
         return data
 
@@ -66,13 +64,50 @@ def plot_sim(cfg):
         plt.savefig("%s/Sim_%s.pdf" % (output_dir,key),bbox_inches="tight")
         plt.close()       
     return
+    
+    
+
+def do_plotting(cfg):
+    
+    for name,line in cfg.plots.items():
+        if line['type'] in ("comparison","simulation"):
+            fds_data=read_fds_output(cfg)
+        fig,ax = plt.subplots()
+        nlines = len(line['variables'])
+        colors = plt.cm.jet(np.linspace(0,1,nlines))
+        for var_num,var in enumerate(line['variables']):
+            # plot experimental data if needed
+            if line['type'] in ("comparison","experimental"):
+                etime,edata = cfg.exp_data[var]
+                label  = line['labels'][var_num]
+                if line['type']=="comparison":
+                    label = label + " (exp)"
+                ax.plot(etime,edata,label=label,color=colors[var_num])
+            # plot simulation data if needed
+            if line['type'] in ("comparison","simulation"):
+                if line['type']=="comparison":
+                    lty = "--"
+                else:
+                    lty = "-"
+                stime,sdata = fds_data[var]
+                label  = line['labels'][var_num]
+                if line['type']=="comparison":
+                    label = label + " (sim)"
+                ax.plot(stime,sdata,label=label,color=colors[var_num],linestyle=lty)
+        plt.legend()
+        ax.set_xlabel(line["xlabel"])
+        ax.set_ylabel(line["ylabel"])
+        ax.grid(True)
+        print("%s/%s.pdf" % (output_dir,name))
+        plt.savefig("%s/%s.pdf" % (output_dir,name),bbox_inches="tight")
+        plt.close()   
+                
 
 def main():
     cfg=proc_commandline()
-    print(cfg.optimizer_opts)
+    ensure_dir(os.path.join("./",output_dir,"/"))
     plot_exp(cfg)
-    plot_sim(cfg)
-    print(simulation_dir)
+    do_plotting(cfg)
 
 if __name__=="__main__":
     main()

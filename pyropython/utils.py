@@ -1,7 +1,8 @@
 import os
 from .filter import * 
 from pandas import read_csv
-from numpy import array 
+from numpy import array
+from numpy import gradient as np_gradient 
 
 def ensure_dir(f):
     d = os.path.dirname(f)
@@ -16,8 +17,10 @@ def read_data(fname=None,
               normalize=False,         
               filter_type="None",       
               filter_opts=None,
-              header=1):
-        tmp=read_csv(fname,header=header,
+              gradient=False,
+              header=1,
+              cwd="./"):
+        tmp=read_csv(os.path.join(cwd,fname),header=header,
                     encoding = "latin-1",
                     index_col=False,
                     comment="#",
@@ -29,10 +32,13 @@ def read_data(fname=None,
         tmp=tmp.dropna(axis=1,how='any')
         filter = filter_types.get(filter_type, none_filter)
         x=array(tmp[ind_col_name])
-        y = filter(x,array(tmp[dep_col_name]))
+        y=array(tmp[dep_col_name])
+        y = filter(x,y)
         if normalize:
           y = y/y[0] #assume TGA
-        return x,y
+        if gradient:
+          y = -1.0*np_gradient(y)/np_gradient(x)   
+        return x,y*conversion_factor
 
 def main():
     return
