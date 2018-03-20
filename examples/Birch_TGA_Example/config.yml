@@ -1,9 +1,10 @@
 #start_config
 num_jobs: 2 # number of parallel jobs
-max_iter: 1 # maximum number of iterations
+max_iter: 100 # maximum number of iterations
 num_points: 2  # How many points explored per iteration
-num_initial: 20 # Number of points in initial design
-fds_command: C:/Program Files/firemodels/FDS6/bin/fds.exe
+num_initial: 100 # Number of points in initial design
+# full path to fds executable
+fds_command: C:/Program Files/firemodels/FDS6/bin/fds.exe 
 variables:
   YBIRCH0: [0.0,1.0]
   A: [1e12,1e15]
@@ -23,15 +24,23 @@ variables:
 simulation:
     MASS2: {fname: 'birch_tga_1step_2_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
     MASS20: {fname: 'birch_tga_1step_20_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0, normalize: True}
+    GMASS2: {fname: 'birch_tga_1step_2_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
+    GMASS20: {fname: 'birch_tga_1step_20_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0, normalize: True,gradient: True}    
 experiment:
     MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
     MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
+    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
+    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
 obejctive:
     type: "RMSE"
-    weights: {'MLR': 1.0, 'HRR': 0.0}
-plotting:
-    MLR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
-    HRR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
+    weights: {'MASS2': 1.0, 'MASS20': 1.0,'GMASS20',0.0,'GMASS2',0.0}
+plots:
+    expMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
+    simMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/C)", xlabel: "Temp (C)"}
+    cmpMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    cmpGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-)", xlabel: "Temp (C)"}
 optimizer:
          base_estimator:        'ET'
          acq_func:              'EI'

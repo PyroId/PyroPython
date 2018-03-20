@@ -89,7 +89,7 @@ Perhaps it would be easier to just normalize the output in pyropython.
 
 
 &DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="Mass",QUANTITY = 'SURFACE DENSITY'/
-&DEVC XYZ = 0.0,0.0,1.0,IOR = -3, QUANTITY = 'WALL TEMPERATURE' /
-&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="Temp",QUANTITY = 'WALL TEMPERATURE' /
+&DEVC XYZ = 0.0,0.0,1.0,IOR = -3, ID="Temp",QUANTITY = 'WALL TEMPERATURE' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="Temp2",QUANTITY = 'WALL TEMPERATURE' /
 
 &TAIL /
