@@ -1,9 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
- 
- 
-"""Convenience wrapper for running pyropython directly from source tree without installing."""
+"""
+Created on Tue Mar 20 09:59:59 2018
 
+@author: tstopi
+"""
 
+import sys
 from pyropython.plotting import main
-main()
+
+
+
+if __name__ == "__main__":
+
+    main()
