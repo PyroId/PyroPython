@@ -1,8 +1,10 @@
 from skopt import Optimizer,dump
 from skopt.learning import GaussianProcessRegressor
 from distutils.dir_util import copy_tree
+from shutil import rmtree
 #from sklearn.externals.joblib import Parallel, delayed
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
+from multiprocessing import freeze_support
 # example objective taken from skopt
 from skopt.benchmarks import branin
 from .model import Model 
@@ -70,12 +72,12 @@ def optimize_model(model,cfg):
     line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
     log.write(",".join(line)+"\n")
     # Save the  output files from the best run
-    copy_tree(pwd[ind].name, "Best")
+    copy_tree(pwd[ind], "Best")
     y_best = yi
+    x_best = Xi
     # Explicitly clean up temp direcotries
     for p in pwd:
-        print(pwd)
-        p.cleanup() 
+        rmtree(p)
     # Main iteration loop  
     for i in range(cfg.max_iter): 
         tell(x,y)
@@ -88,14 +90,14 @@ def optimize_model(model,cfg):
         log.write(",".join(line)+"\n")
         # Save the  output files from the best run
         if y_best>yi:
-            copy_tree(pwd[ind].name, "Best")
+            copy_tree(pwd[ind], "Best")
             y_best = yi
+            x_best = Xi
         # Explicitly clean up temp direcotries
         for p in pwd:
-            p.cleanup() 
+            rmtree(p)
     log.close()
-    ind = np.argmin(optimizer.yi)
-    print(optimizer.Xi[ind],optimizer.yi[ind])  # print the best objective found 
+    print(x_best,y_best)  # print the best objective found 
     dump(optimizer, 'result.gz', compress=9)
     return
     
@@ -137,4 +139,5 @@ def main():
     print("done")
 
 if __name__ == "__main__":
+    freeze_support()
     main()

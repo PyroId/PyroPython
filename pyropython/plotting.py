@@ -3,12 +3,14 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from . import config as cfg
+from .utils import read_data
 import argparse
 
 simulation_dir="Best"
 output_dir="Figs"
 
 def proc_commandline():
+    global simulation_dir,output_dir
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",help="Input file name")
     parser.add_argument("-o", "--output_dir", 
@@ -41,9 +43,11 @@ def plot_exp(cfg):
 
 def read_fds_output(cfg):
         data={}
-        for key,(filename,dname,conversion_factor) in cfg.simulation.items():
-             out = np.genfromtxt(simulation_dir+"/"+filename,delimiter=",",names=True,skip_header=1)
-             data[key]=[out['Time'],out[dname]*conversion_factor]
+        cwd = os.getcwd()
+        for key,line in cfg.simulation.items():
+             os.chdir(simulation_dir)
+             T,F = read_data(**line) 
+             data[key]=T,F
         return data
 
 def plot_sim(cfg):

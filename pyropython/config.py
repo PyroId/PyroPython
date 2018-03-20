@@ -7,16 +7,17 @@ Created on Tue Feb  6 09:49:36 2018
 import sys
 import yaml as y
 from pandas import read_csv
-from numpy import array
+from numpy import array,float64
 from scipy import signal
-from .filter import gp_filter
+from .utils import read_data
+from collections import namedtuple
 
 num_jobs    = 1
 max_iter    = 50 
 num_points  = 100
 num_initial = 100
-raw_data    = {}
 exp_data    = {}
+raw_data    = {}
 simulation  = {}
 experiment  = {}
 objective_func = "RMSE"
@@ -30,11 +31,21 @@ optimizer_opts = {"base_estimator":       "ET",
                                             "n_jobs": 1},
                   "acq_func_kwargs":       {"xi": 0.01, "kappa": 1.96}
                   };
-filtering_options= {"filter": "GP"}
 templates = []
 
+
 def _proc_input(cfg):
-    global data_weights,raw_data,exp_data,templates
+    global data_weights,raw_data,exp_data,templates,variables
+    global experiment,simulation
+    
+    # yaml is sometimes unable to correctly convert str to float. 
+    # i.e., scientific notation like "1e15" will cause to fail
+    for n,(name,bounds) in enumerate(variables):
+        try:
+            variables[n] = (name,float64(bounds))
+        except:
+            sys.exit("Bounds for %s need to benumeric (for now)." % name)
+                
     for key in simulation:
         if not key in experiment:
             sys.exit("No experimental data for variable %s" % key)
@@ -43,19 +54,27 @@ def _proc_input(cfg):
             sys.exit("No simulation data for variable %s" % key)
     for fname in cfg['templates']:
         templates.append( (fname,open(fname,'r').read()) )
-    for key,(fname,dname,conversion_factor) in experiment.items():
-        tmp=read_csv(fname,header=1,
-                    encoding = "latin-1",
-                    index_col=False,
-                    comment="#",
-                    error_bad_lines=False,
-                    warn_bad_lines=True,
-                    skip_blank_lines=True)
-        tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
-        tmp=tmp.dropna(axis=1,how='any')
-        dat = gp_filter(array(tmp['Time']),array(tmp[dname]))
-        raw_data[key]=(array(tmp['Time']),array(tmp[dname]*conversion_factor))
-        exp_data[key]=(array(tmp['Time']),array(dat*conversion_factor))
+    # set default values for data lines
+    for key,line in simulation.items():
+        line.setdefault("ind_col_name","Time")
+        line.setdefault("normalize",False)
+        line.setdefault("conversion_factor",1.0)
+        line.setdefault("header",1)
+        line.setdefault("filter_type","None")
+        line.setdefault("filter_opts",None)
+        
+    for key,line in experiment.items():
+        line.setdefault("ind_col_name","Time")
+        line.setdefault("normalize",False)
+        line.setdefault("conversion_factor",1.0)
+        line.setdefault("filter_type","GP")
+        line.setdefault("filter_opts",None)
+        line.setdefault("header",0)
+        exp_data[key]= read_data(**line)
+        tmp = dict(line)
+        tmp["filter_type"]="None"
+        raw_data[key]= read_data(**tmp)
+    
     if len(data_weights)>0:
         if set(data_weights) != set(simulation):
             print("Need to define weights for all variables in 'experiment' and 'simulation':")
@@ -97,11 +116,12 @@ def read_config(fname):
         objective_func = obj.get("objective_func","RMSE")
         data_weights   = obj.get("data_weights",None)
     _proc_input(cfg)
-
-
-if __name__=="__main__":
+def main():
     fname=sys.argv[1]
     read_config(fname)
     print(num_jobs)
     print(len(exp_data))
+
+if __name__=="__main__":
+    main()
 

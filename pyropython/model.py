@@ -6,6 +6,7 @@ import subprocess
 from multiprocessing import Lock
 from . import config as cfg
 from jinja2 import Template
+from .utils import read_data
 import sys
 
 
@@ -23,48 +24,47 @@ class Model:
          self.tempdir=os.getcwd()+"/Work/"
 
      def write_fds_file(self,outname,template,x):
-        f=open(outname,"w")
+        f=open(outname,"tw")
         template=Template(template)
         variables = {self.params[n][0]: var for n,var in enumerate(x)}
         outfile = template.render(**variables)
         f.writelines(outfile)
-        f.close() 
+        f.flush()
+        f.close()
 
      def run_fds(self,x):
         cwd = os.getcwd()
         tempfile.tempdir=self.tempdir
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
-        pwd = tempfile.TemporaryDirectory(prefix="Cone_")
-        os.chdir(pwd.name)
+        pwd = tempfile.mkdtemp(prefix="Cone_")
+        os.chdir(pwd)
         devnull = open(os.devnull, 'w')
         for fname,template in self.templates:
-            print(fname,self.fds_command)
-            self.write_fds_file(fname,template,x)
+            outname = os.path.join(pwd,fname)
+            self.write_fds_file(outname,template,x)
             proc = subprocess.Popen([self.fds_command,fname],
                                     env = my_env,
-                                    stdout=devnull,
-                                    stderr=devnull)
+                                    cwd=pwd,
+                                    stderr = devnull)
             proc.wait()
         devnull.close()
-        Time,data = self.read_fds_output()
+        data = self.read_fds_output()
         os.chdir(cwd)
-        return Time,data,pwd
+        return data,pwd
 
-     def read_fds_output(self):
+     def read_fds_output(self, directory=""):
         data={}
-        Time=np.array([])
-        for key,(filename,dname,conversion_factor) in self.simulation.items():
-             out = np.genfromtxt(filename,delimiter=",",names=True,skip_header=1)
-             data[key]=[out['Time'],out[dname]*conversion_factor]
-        return Time,data
-         
-             
+        for key,line in self.simulation.items():
+             T,F = read_data(**line) 
+             data[key]=T,F
+        return data
+        
              
      def fitness(self, x):
          fit=0
          x=np.reshape(x,len(self.params))
-         T,data,pwd = self.run_fds(x)
+         data,pwd = self.run_fds(x)
          Fi={}
          for key,d in data.items():
              T,F = d
@@ -89,10 +89,6 @@ class Model:
 
 
 def main():
-    return
-
-if __name__ == "__main__":
-    main()
     fname=sys.argv[1]
     cfg.read_config(fname)
     model = Model(exp_data=cfg.exp_data,
@@ -103,4 +99,9 @@ if __name__ == "__main__":
     x=[np.mean(x) for x in model.get_bounds()]
     fit = model.fitness(x)
     print(fit)
+    return
+
+if __name__ == "__main__":
+    main()
+
 

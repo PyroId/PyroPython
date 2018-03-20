@@ -7,6 +7,9 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern,WhiteKernel,RBF
 from numpy import array,newaxis,squeeze
 
+
+
+
 def gp_filter(x,y):
     kernel =  1.0*Matern(length_scale=20.0, length_scale_bounds=(1e-1, 1000.0),nu=2.5) \
               + WhiteKernel(noise_level=5.0, noise_level_bounds=(1e-1, 1000.0))
@@ -15,7 +18,22 @@ def gp_filter(x,y):
     return squeeze(gp.predict(x[:,newaxis]))
 
 def butterworth_filter(x,y):
-	return
+	return y
 
 def moving_average_filter(x,y):
-	return
+	return y
+
+def none_filter(x,y):
+	return y
+
+filter_types = {"GP": gp_filter,
+           "butter": butterworth_filter,
+           "MA": gp_filter,
+           "None": none_filter
+        };
+                
+def main():
+    return
+
+if __name__=="__main__":
+    main()
