@@ -29,7 +29,7 @@
 #CORR. CODE:                  020                             
 #EXO:                         +1                              
 #RANGE:                       20.0/2.00(K/min)/800.0          
-#SEGMENT:                     S1/2                            
+#SEGMENT:                     S1/2
 Temp (C),Mass (%)
  23.85012,100.00000
  24.85012, 99.72929

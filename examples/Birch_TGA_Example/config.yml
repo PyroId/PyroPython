@@ -1,14 +1,14 @@
 #start_config
-num_jobs: 1 # number of parallel jobs
-max_iter: 0 # maximum number of iterations
-num_points: 1  # How many points explored per iteration
-num_initial: 1 # Number of points in initial design
-fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
+num_jobs: 2 # number of parallel jobs
+max_iter: 1 # maximum number of iterations
+num_points: 2  # How many points explored per iteration
+num_initial: 20 # Number of points in initial design
+fds_command: C:/Program Files/firemodels/FDS6/bin/fds.exe
 variables:
-  YBIRCH0: [0,1]
-  A: [1E10,1E14]
-  E: [1E4,1E6]
-  NUCHAR: [0,1]
+  YBIRCH0: [0.0,1.0]
+  A: [1e12,1e15]
+  E: [100000.0,1000000.0]
+  NUCHAR: [0.0,1.0]
 #    A   = 2.75E12
 #    E    = 1.75E5
 #simulation - simulation outputfiles
@@ -21,11 +21,11 @@ variables:
 #experiment - experimental data in same format
 #   Var_name: data_file, col name, conversion factor
 simulation:
-    MASS2: ['birch_tga_1step_2_devc.csv','MASS',1.0]
-    MASS20: ['birch_tga_1step_20_devc.csv','MASS',1.0]
+    MASS2: {fname: 'birch_tga_1step_2_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
+    MASS20: {fname: 'birch_tga_1step_20_devc.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0, normalize: True}
 experiment:
-    MASS2: ['birch_tga_2_exp.csv','Mass',1.0]
-    MASS20: ['birch_tga_20_exp.csv','Mass',1.0]
+    MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
+    MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
 obejctive:
     type: "RMSE"
     weights: {'MLR': 1.0, 'HRR': 0.0}
@@ -33,11 +33,11 @@ plotting:
     MLR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
     HRR: {ylabel: "MLR (g/m$^2$s)", xlabel: "Time (s)"}
 optimizer:
-         base_estimator:        'GP'
+         base_estimator:        'ET'
          acq_func:              'EI'
          acq_optimizer:         'auto'
-         n_initial_points:      36 
+         n_initial_points:      1 
          acq_optimizer_kwargs:  {n_points: 10000, n_restarts_optimizer": 5,n_jobs: 1}
-         acq_func_kwargs:       {xi: 0.05, kappa: 0.96}
-templates: ["birch_cone.fds"]
-#end_config
+         acq_func_kwargs:       {xi: 0.01, kappa: 1.96}
+templates: ["birch_tga_1step_2.fds","birch_tga_1step_20.fds"]
+

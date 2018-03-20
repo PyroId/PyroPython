@@ -48,13 +48,13 @@
 	DENSITY 	= 550.
 	CONDUCTIVITY	= 0.20
 	SPECIFIC_HEAT	= 1.34 
-	N_REACTIONS	= 1
-	A       = {{A}}
-	E       = {{E}}
-	N_S		= 1.0
+	N_REACTIONS		= 1
+	A       		= {{A}}
+	E       		= {{E}}
+	N_S				= 1.0
     SPEC_ID         = 'METHANE'
-	NU_SPEC 	= {{1-NUCHAR}}
-	MATL_ID		= 'CHAR'
+	NU_SPEC 		= {{1-NUCHAR}}
+	MATL_ID			= 'CHAR'
     NU_MATL         = {{NUCHAR}} 
 	HEAT_OF_REACTION= 218.
 	HEAT_OF_COMBUSTION = 40000.0 /
@@ -86,15 +86,10 @@
 Perhaps it would be easier to just normalize the output in pyropython.
 
 
-{%set XBIRCH=YBIRCH0/550 %}
-{%set XMOIST=(1-YBIRCH0)/1000 %}
-{%set XSUM=XBIRCH+XMOIST %}
-{%set XBIRCH=XBIRCH/XSUM %}
-{%set XMOIST=XMOIST/XSUM %}
-{%set DENSITY=XMOIST*1000+XBIRCH*550 %}
 
-&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="MASS",QUANTITY = 'SURFACE DENSITY', CONVERSION_FACTOR={{100/(DENSITY*0.00001)}} /
+
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="Mass",QUANTITY = 'SURFACE DENSITY'/
 &DEVC XYZ = 0.0,0.0,1.0,IOR = -3, QUANTITY = 'WALL TEMPERATURE' /
-&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, QUANTITY = 'WALL TEMPERATURE' /
+&DEVC XYZ = 0.0,0.0,0.0,IOR = 3, ID="Temp",QUANTITY = 'WALL TEMPERATURE' /
 
 &TAIL /
