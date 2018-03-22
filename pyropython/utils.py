@@ -1,7 +1,7 @@
 import os
 from .filter import * 
 from pandas import read_csv
-from numpy import array
+from numpy import array,mean
 from numpy import gradient as np_gradient 
 
 def ensure_dir(f):
@@ -37,7 +37,7 @@ def read_data(fname=None,
         if normalize:
           y = y/y[0] #assume TGA
         if gradient:
-          y = -1.0*np_gradient(y)/np_gradient(x)   
+          y = -1.0*np_gradient(y)/np_gradient(x)
         return x,y*conversion_factor
 
 def main():

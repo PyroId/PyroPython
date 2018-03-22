@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from . import config as cfg
 from .utils import read_data, ensure_dir
 import argparse
-import os 
+import os
+from .model import Model
 simulation_dir="Best/"
 output_dir="Figs/"
 
@@ -94,6 +95,7 @@ def do_plotting(cfg):
                 if line['type']=="comparison":
                     label = label + " (sim)"
                 ax.plot(stime,sdata,label=label,color=colors[var_num],linestyle=lty)
+
         plt.legend()
         ax.set_xlabel(line["xlabel"])
         ax.set_ylabel(line["ylabel"])
@@ -101,11 +103,42 @@ def do_plotting(cfg):
         print("%s/%s.pdf" % (output_dir,name))
         plt.savefig("%s/%s.pdf" % (output_dir,name),bbox_inches="tight")
         plt.close()   
-                
+
+def dump_data(cfg):
+    smooth = []
+    raw    = []
+    sim    = []
+    for key,(etime,edata) in cfg.exp_data.items():
+        smooth.append(etime)
+        smooth.append(edata)
+        print(key,np.mean(edata))
+    smooth = np.vstack(smooth)
+    np.savetxt("smooth.csv",smooth.T,header=",".join(cfg.exp_data.keys())) 
+    try:
+        fds_data=read_fds_output(cfg)
+    except:
+        print("No FDS data available")
+        return
+    for key,(stime,sdata) in fds_data.items():
+        sim.append(stime)
+        sim.append(sdata)
+        print(key,np.mean(sdata))
+    sim = np.vstack(sim)
+    np.savetxt("sim.csv",sim.T,header=",".join(fds_data.keys()))
+    
+    model = Model(exp_data=cfg.exp_data,
+                  params=cfg.variables,
+                  simulation=cfg.simulation,
+                  fds_command=cfg.fds_command,
+                  templates=cfg.templates,
+                  data_weights=cfg.data_weights)
+    print("fit:",model.fitnessfunc(cfg.exp_data,fds_data))
+    return           
 
 def main():
     cfg=proc_commandline()
     ensure_dir(os.path.join("./",output_dir,"/"))
+    #dump_data(cfg)
     plot_exp(cfg)
     do_plotting(cfg)
 

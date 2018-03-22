@@ -1,9 +1,7 @@
 import tempfile
 import os
 import numpy as np
-import copy
 import subprocess
-from multiprocessing import Lock
 from . import config as cfg
 from jinja2 import Template
 from .utils import read_data
@@ -46,7 +44,8 @@ class Model:
             proc = subprocess.Popen([self.fds_command,fname],
                                     env = my_env,
                                     cwd=pwd,
-                                    stderr = devnull)
+                                    stderr = devnull,
+                                    stdout = devnull)
             proc.wait()
         devnull.close()
         data = self.read_fds_output()
@@ -75,13 +74,14 @@ class Model:
 
      def fitnessfunc(self,exp_data,sim_data):
         fitness = 0.0
-        Nk = len(exp_data)
+        weight_sum = 0.0
         for key,(etime,edata) in exp_data.items():
             sdata = sim_data[key]
             weight = self.data_weights[key]
             diff = weight*np.mean((edata-sdata)**2)/np.var(edata)
-            fitness += 1.0/Nk * diff
-        return fitness
+            weight_sum +=weight
+            fitness +=  diff
+        return fitness/weight_sum
 
      def get_bounds(self):
          return [tuple(bounds) for name,bounds in self.params]

@@ -78,6 +78,7 @@ def _proc_input(cfg):
         tmp["filter_type"]="None"
         raw_data[key]= read_data(**tmp)
     
+    
     if len(data_weights)>0:
         if set(data_weights) != set(simulation):
             print("Need to define weights for all variables in 'experiment' and 'simulation':")
