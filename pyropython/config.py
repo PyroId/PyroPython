@@ -65,7 +65,7 @@ def _proc_input(cfg):
         line.setdefault("conversion_factor",1.0)
         line.setdefault("header",1)
         line.setdefault("filter_type","None")
-        line.setdefault("filter_opts",None)
+        line.setdefault("filter_opts",{})
         line.setdefault("gradient",False)
 
     for key,line in experiment.items():
@@ -73,7 +73,7 @@ def _proc_input(cfg):
         line.setdefault("normalize",False)
         line.setdefault("conversion_factor",1.0)
         line.setdefault("filter_type","GP")
-        line.setdefault("filter_opts",None)
+        line.setdefault("filter_opts",{})
         line.setdefault("header",0)
         line.setdefault("gradient",False)
         exp_data[key]= read_data(**line)
@@ -83,7 +83,8 @@ def _proc_input(cfg):
 
             
     
-    
+    # Weights for each  variable
+    # if weights are not given, set weight to 1.0 for all datasets
     if len(data_weights)>0:
         if set(data_weights) != set(simulation):
             print("Need to define weights for all variables in 'experiment' and 'simulation':")
@@ -93,6 +94,9 @@ def _proc_input(cfg):
         for key in experiment:
             data_weights[key]=1.0
     
+    # weights can be read from a file or input as a list of tuples in the format
+    # [(x,w),(x,w),(x,w)] where x is the independent variable and w is th eweight
+    # weights will be interpolated to coincide with the experimental data
     for key,(etime,edata) in exp_data.items():
         if key in var_weights:
             entry = var_weights[key]
@@ -107,11 +111,9 @@ def _proc_input(cfg):
         else:
             wtime = etime
             weights = ones(len(etime))
-        weightsi = interp(wtime,weights,etime,left=0,right=0)
-        var_weights[key]=(etime,weightsi)
+        weightsi = interp(etime,wtime,weights,left=0,right=0)
+        var_weights[key]=weightsi      
                 
-                
-
     
 
 def read_config(fname):

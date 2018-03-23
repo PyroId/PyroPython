@@ -1,5 +1,5 @@
 import os
-from .filter import * 
+from .filter import get_filter
 from pandas import read_csv
 from numpy import array,mean
 from numpy import gradient as np_gradient 
@@ -16,7 +16,7 @@ def read_data(fname=None,
               conversion_factor=1.0, 
               normalize=False,         
               filter_type="None",       
-              filter_opts=None,
+              filter_opts={},
               gradient=False,
               header=1,
               cwd="./"):
@@ -30,7 +30,7 @@ def read_data(fname=None,
         # Remove trailing units from column headers
         tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
         tmp=tmp.dropna(axis=1,how='any')
-        filter = filter_types.get(filter_type, none_filter)
+        filter = get_filter(filter_type)
         try:   
             x=array(tmp[ind_col_name])
             y=array(tmp[dep_col_name])
@@ -39,7 +39,7 @@ def read_data(fname=None,
             print("Column names:")
             prtin(tmp.columns)
             sys.exit(0)
-        y = filter(x,y)
+        y = filter(x,y,**filter_opts)
         if normalize:
           y = y/y[0] #assume TGA
         if gradient:

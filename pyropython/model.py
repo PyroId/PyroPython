@@ -22,7 +22,8 @@ class Model:
          self.points   = []
          self.fds_command = fds_command
          self.tempdir=os.getcwd()+"/Work/"
-         self.fitness_function = get_objective_function() 
+         self.objective_function = get_objective_function()
+
      def write_fds_file(self,outname,template,x):
         f=open(outname,"tw")
         template=Template(template)
@@ -73,8 +74,7 @@ class Model:
              Fi=np.interp(etime,T,F,left=0,right=0)
              weight = self.data_weights[key]
              weight_sum +=weight
-             fit    = weight*self.fitnessfunc(edata,Fi,
-                                              self.var_weights[key])
+             fit    = weight*self.objective_function(edata,Fi,self.var_weights[key])
          fit = fit/weight_sum
          return fit,pwd 
 

@@ -137,7 +137,7 @@ def dump_data(cfg):
 
 def main():
     cfg=proc_commandline()
-    ensure_dir(os.path.join("./",output_dir,"/"))
+    ensure_dir(os.path.join("./",output_dir))
     #dump_data(cfg)
     plot_exp(cfg)
     do_plotting(cfg)

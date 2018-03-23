@@ -10,14 +10,14 @@ from scipy.signal import medfilt,firwin,convolve,kaiserord ,lfilter
 
 
 
-def gp_filter(x,y):
+def gp_filter(x,y,**kwargs):
     kernel =  1.0*Matern(length_scale=20.0, length_scale_bounds=(1e-1, 1000.0),nu=2.5) \
               + WhiteKernel(noise_level=0.0, noise_level_bounds=(1e-1, 1000.0))
     gp = GaussianProcessRegressor(kernel=kernel)
     gp.fit(x[:,newaxis],y[:,newaxis])
     return squeeze(gp.predict(x[:,newaxis]))
 
-def butterworth_filter(x,y,f):
+def butterworth_filter(x,y,f,**kwargs):
 	return y
 
 def fir_filter(x,y,cutoff=0.0125,width=0.0125):
@@ -32,18 +32,20 @@ def moving_average_filter(x,y,width=10,window='hanning'):
 def median_filter(x,y,width=10):
 	return medfilt(y,kernel=width)
 
-def none_filter(x,y):
+def none_filter(x,y,**kwargs):
 	return y
 
 filter_types = {"GP": gp_filter,
                 "median": gp_filter,
-                "butter": butterworth_filter,
-                "MA": gp_filter,
+                "FIR": fir_filter,
+                "MA": moving_average_filter,
                 "None": none_filter
         };
 
 def get_filter(name):
-    return filter
+  if name not in filter_types:
+    sys.exit("Warning: unknown filter type %s." %name)
+  return filter_types.get(name, none_filter)
                 
 def main():
     return

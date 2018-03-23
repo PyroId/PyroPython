@@ -5,8 +5,6 @@ from shutil import rmtree
 #from sklearn.externals.joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 from multiprocessing import freeze_support
-# example objective taken from skopt
-from skopt.benchmarks import branin
 from .model import Model 
 import numpy as np
 from pandas import read_csv
@@ -25,7 +23,7 @@ def initialize_model(cfg):
                   simulation=cfg.simulation,
                   fds_command=cfg.fds_command,
                   templates=cfg.templates,
-                  data_weights=cfg.data_weights
+                  data_weights=cfg.data_weights,
                   var_weights=cfg.var_weights)
     return model
 
