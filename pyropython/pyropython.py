@@ -25,7 +25,8 @@ def initialize_model(cfg):
                   simulation=cfg.simulation,
                   fds_command=cfg.fds_command,
                   templates=cfg.templates,
-                  data_weights=cfg.data_weights)
+                  data_weights=cfg.data_weights
+                  var_weights=cfg.var_weights)
     return model
 
 

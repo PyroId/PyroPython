@@ -7,7 +7,7 @@ Created on Tue Feb  6 09:49:36 2018
 import sys
 import yaml as y
 from pandas import read_csv
-from numpy import array,float64
+from numpy import array,float64,interp,ones
 from scipy import signal
 from .utils import read_data
 from collections import namedtuple
@@ -21,8 +21,9 @@ raw_data    = {}
 simulation  = {}
 experiment  = {}
 plots       = {}
-objective_func = "RMSE"
+objective_func = "standardized_moment"
 data_weights = {}
+var_weights  = {}
 fds_command = "fds"
 optimizer_opts = {"base_estimator":       "ET",
                   "acq_func":             "gp_hedge",
@@ -37,10 +38,11 @@ templates = []
 
 def _proc_input(cfg):
     global data_weights,raw_data,exp_data,templates,variables
-    global experiment,simulation
+    global experiment,simulation,var_weights
     
     # yaml is sometimes unable to correctly convert str to float. 
     # i.e., scientific notation like "1e15" will cause to fail
+    # this would be a good place to convert numeric input to floats
     for n,(name,bounds) in enumerate(variables):
         try:
             variables[n] = (name,float64(bounds))
@@ -55,6 +57,7 @@ def _proc_input(cfg):
             sys.exit("No simulation data for variable %s" % key)
     for fname in cfg['templates']:
         templates.append( (fname,open(fname,'r').read()) )
+        
     # set default values for data lines
     for key,line in simulation.items():
         line.setdefault("ind_col_name","Time")
@@ -64,7 +67,7 @@ def _proc_input(cfg):
         line.setdefault("filter_type","None")
         line.setdefault("filter_opts",None)
         line.setdefault("gradient",False)
-        
+
     for key,line in experiment.items():
         line.setdefault("ind_col_name","Time")
         line.setdefault("normalize",False)
@@ -77,6 +80,8 @@ def _proc_input(cfg):
         tmp = dict(line)
         tmp["filter_type"]="None"
         raw_data[key]= read_data(**tmp)
+
+            
     
     
     if len(data_weights)>0:
@@ -87,7 +92,27 @@ def _proc_input(cfg):
     else:
         for key in experiment:
             data_weights[key]=1.0
+    
+    for key,(etime,edata) in exp_data.items():
+        if key in var_weights:
+            entry = var_weights[key]
+            if isinstance(dict,entry):
+                wtime,weights=read_data(**entry)
+            elif isinstance(list,entry):
+                wtime,weights = zip(*entry)
+            else:    
+                print("Problem with weights for variable %s" % key)
+                wtime = etime
+                weights = ones(1,len(etime))
+        else:
+            wtime = etime
+            weights = ones(len(etime))
+        weightsi = interp(wtime,weights,etime,left=0,right=0)
+        var_weights[key]=(etime,weightsi)
+                
+                
 
+    
 
 def read_config(fname):
     global max_iter,num_jobs,num_points,num_initial,simulation,experiment,variables
@@ -118,9 +143,13 @@ def read_config(fname):
     optimizer_opts=cfg.get("optimizer",optimizer_opts)
     obj = cfg.get("objective",None)
     if obj:
-        objective_func = obj.get("objective_func","RMSE")
-        data_weights   = obj.get("data_weights",None)
+        objective_func = obj.get("objective_func","standardized_moment")
+        objective_opts = obj.get("objective_opts",{})
+        data_weights   = obj.get("data_weights",{})
+        var_weights    = obj.get("var_weights",{})
+    
     _proc_input(cfg)
+    
 def main():
     fname=sys.argv[1]
     read_config(fname)

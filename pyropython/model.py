@@ -5,14 +5,16 @@ import subprocess
 from . import config as cfg
 from jinja2 import Template
 from .utils import read_data
+from .objective_functions import get_objective_function
 import sys
 
 
 class Model:
-     def __init__(self,exp_data,params,simulation,fds_command,templates,data_weights):
+     def __init__(self,exp_data,params,simulation,fds_command,templates,data_weights,var_weights):
          self.exp_data = exp_data
          self.params = params
          self.simulation = simulation
+         self.var_weights = var_weights
          self.data_weights = data_weights
          self.num_fitness = 0
          #self.template = Template(template)
@@ -20,7 +22,7 @@ class Model:
          self.points   = []
          self.fds_command = fds_command
          self.tempdir=os.getcwd()+"/Work/"
-
+         self.fitness_function = get_objective_function() 
      def write_fds_file(self,outname,template,x):
         f=open(outname,"tw")
         template=Template(template)
@@ -64,24 +66,19 @@ class Model:
          fit=0
          x=np.reshape(x,len(self.params))
          data,pwd = self.run_fds(x)
-         Fi={}
+         weight_sum = 0.0
          for key,d in data.items():
              T,F = d
              etime,edata = self.exp_data[key] 
-             Fi[key]=np.interp(etime,T,F,left=0,right=0)
-         fit = self.fitnessfunc(self.exp_data,Fi)
+             Fi=np.interp(etime,T,F,left=0,right=0)
+             weight = self.data_weights[key]
+             weight_sum +=weight
+             fit    = weight*self.fitnessfunc(edata,Fi,
+                                              self.var_weights[key])
+         fit = fit/weight_sum
          return fit,pwd 
 
-     def fitnessfunc(self,exp_data,sim_data):
-        fitness = 0.0
-        weight_sum = 0.0
-        for key,(etime,edata) in exp_data.items():
-            sdata = sim_data[key]
-            weight = self.data_weights[key]
-            diff = weight*np.mean((edata-sdata)**2)/np.var(edata)
-            weight_sum +=weight
-            fitness +=  diff
-        return fitness/weight_sum
+
 
      def get_bounds(self):
          return [tuple(bounds) for name,bounds in self.params]

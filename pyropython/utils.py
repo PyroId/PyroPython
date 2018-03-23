@@ -31,8 +31,14 @@ def read_data(fname=None,
         tmp.columns = [colname.split('(')[0].strip() for colname in tmp.columns]
         tmp=tmp.dropna(axis=1,how='any')
         filter = filter_types.get(filter_type, none_filter)
-        x=array(tmp[ind_col_name])
-        y=array(tmp[dep_col_name])
+        try:   
+            x=array(tmp[ind_col_name])
+            y=array(tmp[dep_col_name])
+        except KeyError as KeyErr:
+            print("Column named '%s' in file '%s' not found." % (KeyErr,line[key]["fname"]))
+            print("Column names:")
+            prtin(tmp.columns)
+            sys.exit(0)
         y = filter(x,y)
         if normalize:
           y = y/y[0] #assume TGA

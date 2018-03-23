@@ -5,8 +5,8 @@
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern,WhiteKernel,RBF
-from numpy import array,newaxis,squeeze
-
+from numpy import array,newaxis,squeeze,median
+from scipy.signal import medfilt,firwin,convolve,kaiserord ,lfilter
 
 
 
@@ -17,20 +17,33 @@ def gp_filter(x,y):
     gp.fit(x[:,newaxis],y[:,newaxis])
     return squeeze(gp.predict(x[:,newaxis]))
 
-def butterworth_filter(x,y):
+def butterworth_filter(x,y,f):
 	return y
 
-def moving_average_filter(x,y):
+def fir_filter(x,y,cutoff=0.0125,width=0.0125):
+   numtaps, beta = kaiserord(65, width)
+   taps = firwin(numtaps, cutoff, window=('kaiser', beta),
+                 scale=False)
+   return convolve(y,taps,mode="same")
+
+def moving_average_filter(x,y,width=10,window='hanning'):
 	return y
+
+def median_filter(x,y,width=10):
+	return medfilt(y,kernel=width)
 
 def none_filter(x,y):
 	return y
 
 filter_types = {"GP": gp_filter,
-           "butter": butterworth_filter,
-           "MA": gp_filter,
-           "None": none_filter
+                "median": gp_filter,
+                "butter": butterworth_filter,
+                "MA": gp_filter,
+                "None": none_filter
         };
+
+def get_filter(name):
+    return filter
                 
 def main():
     return
