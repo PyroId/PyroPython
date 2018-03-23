@@ -5,11 +5,13 @@ Created on Tue Feb  6 09:49:36 2018
 @author: tstopi
 """
 import sys
+import os
 import yaml as y
 from pandas import read_csv
 from numpy import array,float64,interp,ones
 from scipy import signal
 from .utils import read_data
+from .objective_functions import get_objective_function
 from collections import namedtuple
 
 num_jobs    = 1
@@ -21,7 +23,8 @@ raw_data    = {}
 simulation  = {}
 experiment  = {}
 plots       = {}
-objective_func = "standardized_moment"
+objective_function = get_objective_function()
+objective_opts = {}
 data_weights = {}
 var_weights  = {}
 fds_command = "fds"
@@ -34,6 +37,7 @@ optimizer_opts = {"base_estimator":       "ET",
                   "acq_func_kwargs":       {"xi": 0.01, "kappa": 1.96}
                   };
 templates = []
+tempdir = os.path.join(os.getcwd(),"Work/")
 
 
 def _proc_input(cfg):
@@ -118,7 +122,7 @@ def _proc_input(cfg):
 
 def read_config(fname):
     global max_iter,num_jobs,num_points,num_initial,simulation,experiment,variables
-    global optimizer_opts,objective_func,data_weights,fds_command,plots
+    global optimizer_opts,objective_function,data_weights,fds_command,plots
     lines=open(fname,"r").read()
     cfg = y.load(lines)
     # check sanity of input
@@ -145,7 +149,8 @@ def read_config(fname):
     optimizer_opts=cfg.get("optimizer",optimizer_opts)
     obj = cfg.get("objective",None)
     if obj:
-        objective_func = obj.get("objective_func","standardized_moment")
+        objective_name = obj.get("objective_func","standardized_moment")
+        objective_function = get_objective_function(objective_name)
         objective_opts = obj.get("objective_opts",{})
         data_weights   = obj.get("data_weights",{})
         var_weights    = obj.get("var_weights",{})

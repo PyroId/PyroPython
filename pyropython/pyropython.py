@@ -18,13 +18,7 @@ import pickle
 from .utils import ensure_dir
 
 def initialize_model(cfg):
-    model = Model(exp_data=cfg.exp_data,
-                  params=cfg.variables,
-                  simulation=cfg.simulation,
-                  fds_command=cfg.fds_command,
-                  templates=cfg.templates,
-                  data_weights=cfg.data_weights,
-                  var_weights=cfg.var_weights)
+    model = Model()
     return model
 
 
@@ -60,7 +54,7 @@ def optimize_model(model,cfg):
 
     # initial design (random)
     log=open("log.csv","w",buffering=1)
-    header = ",".join(["Iteration"]+[name for name,bounds in cfg.variables]+["Objective"])
+    header = ",".join(["Iteration"]+[name for name,bounds in cfg.variables]+["Objective","Best Objective"])
     log.write(header+"\n")
     print("picking initial points")
     x = ask(cfg.num_initial)
@@ -68,7 +62,7 @@ def optimize_model(model,cfg):
     ind = np.argmin(y)
     yi = y[ind]
     Xi = x[ind]
-    line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
+    line = ["%d" % 0 ] + ["%.3f" % f for f in Xi] + ["%3f" % yi,"%3f" % yi]
     log.write(",".join(line)+"\n")
     # Save the  output files from the best run
     copy_tree(pwd[ind], "Best")
@@ -79,22 +73,27 @@ def optimize_model(model,cfg):
         rmtree(p)
     # Main iteration loop  
     for i in range(cfg.max_iter): 
+        # teach points
         tell(x,y)
         x = ask(cfg.num_points)
         y,pwd = evaluate(x)
         ind = np.argmin(y)
         yi = y[ind]
         Xi = x[ind]
-        line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi]
-        log.write(",".join(line)+"\n")
+
         # Save the  output files from the best run
         if y_best>yi:
             copy_tree(pwd[ind], "Best")
             y_best = yi
             x_best = Xi
+        
         # Explicitly clean up temp direcotries
         for p in pwd:
             rmtree(p)
+
+        # Log iteration
+        line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi,"%3f" % y_best]
+        log.write(",".join(line)+"\n")
     log.close()
     print(x_best,y_best)  # print the best objective found 
     dump(optimizer, 'result.gz', compress=9)

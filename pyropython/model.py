@@ -10,19 +10,24 @@ import sys
 
 
 class Model:
-     def __init__(self,exp_data,params,simulation,fds_command,templates,data_weights,var_weights):
-         self.exp_data = exp_data
-         self.params = params
-         self.simulation = simulation
-         self.var_weights = var_weights
-         self.data_weights = data_weights
-         self.num_fitness = 0
-         #self.template = Template(template)
-         self.templates = templates
-         self.points   = []
-         self.fds_command = fds_command
-         self.tempdir=os.getcwd()+"/Work/"
-         self.objective_function = get_objective_function()
+     def __init__(self):
+         self.exp_data           = cfg.exp_data
+         self.params             = cfg.variables
+         self.simulation         = cfg.simulation
+         self.var_weights        = cfg.var_weights
+         self.data_weights       = cfg.data_weights
+         self.templates          = cfg.templates
+         self.command            = cfg.fds_command
+         self.tempdir            = cfg.tempdir
+         self.objective_function = cfg.objective_function
+         self.objective_opts     = cfg.objective_opts
+
+     def initialize(self,**kwargs):
+        for key in kwargs:
+            if key in self.fields:
+                setattr(self, key, kwargs[key])
+            else:
+                raise Exception('invalid attribute: {0}'.format(key))
 
      def write_fds_file(self,outname,template,x):
         f=open(outname,"tw")
@@ -44,7 +49,7 @@ class Model:
         for fname,template in self.templates:
             outname = os.path.join(pwd,fname)
             self.write_fds_file(outname,template,x)
-            proc = subprocess.Popen([self.fds_command,fname],
+            proc = subprocess.Popen([self.command,fname],
                                     env = my_env,
                                     cwd=pwd,
                                     stderr = devnull,
@@ -71,10 +76,12 @@ class Model:
          for key,d in data.items():
              T,F = d
              etime,edata = self.exp_data[key] 
+             # interpolate simulation data to experiment
              Fi=np.interp(etime,T,F,left=0,right=0)
              weight = self.data_weights[key]
              weight_sum +=weight
-             fit    = weight*self.objective_function(edata,Fi,self.var_weights[key])
+             opts =self.objective_opts
+             fit    = weight*self.objective_function(edata,Fi,self.var_weights[key],**opts)
          fit = fit/weight_sum
          return fit,pwd 
 
