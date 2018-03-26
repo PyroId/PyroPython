@@ -43,7 +43,7 @@ def standardized_moment(edata,sdata,weights,p=1):
 
 objective_functions={"standardized_moment": standardized_moment,
                      "mse": mse,
-                     "abs_dev": abs_dev}
+                     "abs-dev": abs_dev}
 
 def get_objective_function(name="standardized_moment"):
     """

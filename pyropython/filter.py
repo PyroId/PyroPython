@@ -18,7 +18,7 @@ def gp_filter(x,y,**kwargs):
     return squeeze(gp.predict(x[:,newaxis]))
 
 def butterworth_filter(x,y,f,**kwargs):
-	return y
+  return y
 
 def fir_filter(x,y,cutoff=0.0125,width=0.0125):
    numtaps, beta = kaiserord(65, width)
@@ -27,16 +27,20 @@ def fir_filter(x,y,cutoff=0.0125,width=0.0125):
    return convolve(y,taps,mode="same")
 
 def moving_average_filter(x,y,width=10,window='hanning'):
-	return y
+  return y
 
 def median_filter(x,y,width=10):
-	return medfilt(y,kernel=width)
+  if width % 2 == 0:
+    kernel_size = width+1 
+  else:
+    kernel_size = width
+  return medfilt(y,kernel_size=kernel_size)
 
 def none_filter(x,y,**kwargs):
-	return y
+  return y
 
 filter_types = {"GP": gp_filter,
-                "median": gp_filter,
+                "median": median_filter,
                 "FIR": fir_filter,
                 "MA": moving_average_filter,
                 "None": none_filter
