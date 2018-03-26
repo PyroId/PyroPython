@@ -8,6 +8,8 @@ fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_
 variables:
   A:       [4.0,14.0]
   E:       [100000.0, 500000.0]
+  AW:      [4.0,14.0]
+  EW:       [100000.0, 500000.0]
 #    A   = 2.75E12
 #    E    = 1.75E5
 #simulation - simulation outputfiles
@@ -42,6 +44,16 @@ experiment:
 obejctive:
     type: "MSE"
     var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
+    # Add more weight to the water evaporation by increasing the weight of temperature interval between 0 C and 110 C
+    data_weights:
+      MASS2: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      MASS5: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      MASS10: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      MASS20: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      GMASS2: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      GMASS5: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      GMASS10: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      GMASS20: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
 plots:
     expMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
     expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
