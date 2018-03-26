@@ -115,7 +115,7 @@ def _proc_input(cfg):
         else:
             wtime = etime
             weights = ones(len(etime))
-        weightsi = interp(etime,wtime,weights,left=0,right=0)
+        weightsi = interp(etime,wtime,weights)
         data_weights[key]=weightsi      
                 
     
@@ -153,8 +153,7 @@ def read_config(fname):
         objective_function = get_objective_function(objective_name)
         objective_opts = obj.get("objective_opts",{})
         data_weights   = obj.get("data_weights",{})
-        var_weights    = obj.get("var_weights",{})
-    
+        var_weights    = obj.get("var_weights",{})   
     _proc_input(cfg)
     
 def main():
