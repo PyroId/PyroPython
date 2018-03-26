@@ -1,14 +1,13 @@
 #start_config
-num_jobs: 2 # number of parallel jobs
-max_iter: 10 # maximum number of iterations
-num_points: 1  # How many points explored per iteration
-num_initial: 40 # Number of points in initial design
+num_jobs: 8 # number of parallel jobs
+max_iter: 50 # maximum number of iterations
+num_points: 8  # How many points explored per iteration
+num_initial: 100 # Number of points in initial design
 # full path to fds executable
-fds_command: C:/Program Files/firemodels/FDS6/bin/fds.exe 
+fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64 
 variables:
   A:       [4.0,14.0]
   E:       [100000.0, 500000.0]
-N_S:
 #    A   = 2.75E12
 #    E    = 1.75E5
 #simulation - simulation outputfiles
@@ -34,20 +33,22 @@ experiment:
     MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
     MASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
     MASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
-    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
-    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
-    GMASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
-    GMASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,gradient: True}
+    # *_exp.csv contains data TEmp, Mass (5) pair. Gradient is then dM/dT. FDS outputs MLR 1/s. Need to convert
+    # dm/dt = dT/dt * dM/dT = 20/60 K/s * dm / dT  or  10/60 K/s * dm / dT etc...
+    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True}
+    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.333,normalize: True,gradient: True}
+    GMASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0833,normalize: True,gradient: True}
+    GMASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.1666,normalize: True,gradient: True}
 obejctive:
-    type: "RMSE"
-    weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',0.0,'GMASS2',0.0,'GMASS10',0.0,'GMASS5',0.0}
+    type: "MSE"
+    var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
 plots:
     expMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
     expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
     simMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "Mass (-)", xlabel: "Temp (C)"}
-    simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/C)", xlabel: "Temp (C)"}
+    simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
     cmpMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
-    cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-)", xlabel: "Temp (C)"}
+    cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
 optimizer:
          base_estimator:        'ET'
          acq_func:              'EI'
