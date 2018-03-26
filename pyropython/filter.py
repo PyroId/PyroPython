@@ -6,7 +6,7 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern,WhiteKernel,RBF
 from numpy import array,newaxis,squeeze,median
-from scipy.signal import medfilt,firwin,convolve,kaiserord ,lfilter
+from scipy.signal import medfilt,firwin,convolve,kaiserord ,lfilter,filtfilt
 
 
 
@@ -22,9 +22,8 @@ def butterworth_filter(x,y,f,**kwargs):
 
 def fir_filter(x,y,cutoff=0.0125,width=0.0125):
    numtaps, beta = kaiserord(65, width)
-   taps = firwin(numtaps, cutoff, window=('kaiser', beta),
-                 scale=False)
-   return convolve(y,taps,mode="same")
+   taps = firwin(numtaps, cutoff, window=('kaiser', beta))
+   return filtfilt(taps, 1.0, y)
 
 def moving_average_filter(x,y,width=10,window='hanning'):
   return y
