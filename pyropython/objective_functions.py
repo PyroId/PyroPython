@@ -50,7 +50,7 @@ def get_objective_function(name="standardized_moment"):
     Returns the objective function with the given name
     """
     if name in objective_functions:
-        func = objective_functions[name]
+        func = objective_functions[name.lower()]
     else:
         sys.exit("Unkonwn objective function %s" % name)
     return func
