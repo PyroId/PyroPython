@@ -89,21 +89,21 @@ def _proc_input(cfg):
     
     # Weights for each  variable
     # if weights are not given, set weight to 1.0 for all datasets
-    if len(data_weights)>0:
-        if set(data_weights) != set(simulation):
+    if len(var_weights)>0:
+        if set(var_weights) != set(simulation):
             print("Need to define weights for all variables in 'experiment' and 'simulation':")
-            print(set(data_weights).symmetric_difference(set(simulation)))
+            print(set(var_weights).symmetric_difference(set(simulation)))
             sys.exit(0)
     else:
         for key in experiment:
-            data_weights[key]=1.0
+            var_weights[key]=1.0
     
     # weights can be read from a file or input as a list of tuples in the format
     # [(x,w),(x,w),(x,w)] where x is the independent variable and w is th eweight
     # weights will be interpolated to coincide with the experimental data
     for key,(etime,edata) in exp_data.items():
-        if key in var_weights:
-            entry = var_weights[key]
+        if key in data_weights:
+            entry = data_weights[key]
             if isinstance(dict,entry):
                 wtime,weights=read_data(**entry)
             elif isinstance(list,entry):
@@ -116,7 +116,7 @@ def _proc_input(cfg):
             wtime = etime
             weights = ones(len(etime))
         weightsi = interp(etime,wtime,weights,left=0,right=0)
-        var_weights[key]=weightsi      
+        data_weights[key]=weightsi      
                 
     
 
