@@ -76,7 +76,7 @@ def _proc_input(cfg):
         line.setdefault("ind_col_name","Time")
         line.setdefault("normalize",False)
         line.setdefault("conversion_factor",1.0)
-        line.setdefault("filter_type","GP")
+        line.setdefault("filter_type","None")
         line.setdefault("filter_opts",{})
         line.setdefault("header",0)
         line.setdefault("gradient",False)
