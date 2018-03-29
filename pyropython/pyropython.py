@@ -1,12 +1,11 @@
 from skopt import Optimizer
-from skopt.learning import GaussianProcessRegressor
+import sklearn.ensemble as skl  
 from distutils.dir_util import copy_tree
 from shutil import rmtree
 #from sklearn.externals.joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 from multiprocessing import freeze_support
 from .model import Model 
-from .plotting import plot_feature_importance 
 import numpy as np
 from pandas import read_csv
 from scipy import signal
@@ -123,23 +122,22 @@ def optimize_model(model,cfg):
     print("\nOptimization finished. The best result found was:")
     for n,(name,bounds) in enumerate(cfg.variables):
         print("{name} :".format(name=name), x_best[n])
-        
+
     # For tree based metamodels, also output variable importance
-    if isinstance(model,skl.RandomForestRegressor) or isinstance(model,skl.ExtraTreesRegressor):    
-            tree  =result.models[-1]
-            X      =result.Xi
-            
-            importances =  tree.feature_importances_
+    forest  =optimizer.models[-1]
+    if isinstance(forest,skl.RandomForestRegressor) or isinstance(forest,skl.ExtraTreesRegressor):    
+            X      =optimizer.Xi            
+            importances =  forest.feature_importances_
             names       =  [name for name,bounds in cfg.variables]
-            std = np.std([tree.feature_importances_ for tree in model.estimators_],axis=0)
-            indices = np.argsort(importances)[::-1]
+            std         =  np.std([tree.feature_importances_ for tree in forest.estimators_],axis=0)
+            indices     =  np.argsort(importances)[::-1]
             # Print the feature ranking
-            print("Variable importance scores:")
+            print("\nVariable importance scores:")
             n_features = len(X[0])
             for f in range(n_features):
                 print("{n}.  {var} : ({importance})".format( n= f + 1, 
-                                                         var = names[indices[f]],
-                                                         importance=importances[indices[f]]))
+                                                             var = names[indices[f]],
+                                                             importance=importances[indices[f]]))
     dump_result(cfg,optimizer)
     return
     
