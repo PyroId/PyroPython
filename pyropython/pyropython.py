@@ -97,6 +97,7 @@ def optimize_model(model,cfg):
         rmtree(p)
     # Main iteration loop  
     for i in range(cfg.max_iter): 
+        print("Iteration {i}/{N}:".format(i=i,N=cfg.max_iter))
         # teach points
         tell(x,y)
         x = ask(cfg.num_points)
@@ -118,6 +119,15 @@ def optimize_model(model,cfg):
         # Log iteration
         line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi,"%3f" % y_best]
         log.write(",".join(line)+"\n")
+
+        # Print info
+        print()
+        print("   best objective from this iteration:  {obj:.3E}".format(obj=yi))
+        print("   best objective found thus far:       {obj:.3E}".format(obj=y_best))
+        print("   best model:")
+        for n,(name,bounds) in enumerate(cfg.variables):
+            print("       {name} :".format(name=name), x_best[n])
+        print()
     log.close()
     print("\nOptimization finished. The best result found was:")
     for n,(name,bounds) in enumerate(cfg.variables):
@@ -135,7 +145,7 @@ def optimize_model(model,cfg):
             print("\nVariable importance scores:")
             n_features = len(X[0])
             for f in range(n_features):
-                print("{n}.  {var} : ({importance})".format( n= f + 1, 
+                print("{n}.  {var} : ({importance:.3f})".format( n= f + 1, 
                                                              var = names[indices[f]],
                                                              importance=importances[indices[f]]))
     dump_result(cfg,optimizer)
