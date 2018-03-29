@@ -39,12 +39,15 @@
 	CONDUCTIVITY 	= 0.6
 	SPECIFIC_HEAT   = 4.19
 	N_REACTIONS 	= 1
-	A 		= 1E13
-	E 		= 1.0E5
+	A       = {{'%.4E' % (10**AW)}}
+	E       = {{EW}}
+
 	N_S             = 1
     SPEC_ID         = 'WATER VAPOR'
 	NU_SPEC         = 1.0
 	HEAT_OF_REACTION= 2260. /
+		A 		= 1E13
+	E 		= 1.0E5
 
 &MATL ID = 'BIRCH'
 	EMISSIVITY 	= 1.0

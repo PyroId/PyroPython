@@ -8,8 +8,8 @@ fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_
 variables:
   A:       [4.0,14.0]
   E:       [100000.0, 500000.0]
-  AW:      [4.0,14.0]
-  EW:       [100000.0, 500000.0]
+  AW:      [10.0,14.0]
+  EW:       [50000.0, 120000.0]
 #    A   = 2.75E12
 #    E    = 1.75E5
 #simulation - simulation outputfiles
@@ -31,29 +31,32 @@ simulation:
     GMASS5: {fname: 'birch_tga_1step_5_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp',conversion_factor: 1.0}
     GMASS10: {fname: 'birch_tga_1step_10_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp',conversion_factor: 1.0}    
 experiment:
-    MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
-    MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
-    MASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
-    MASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True}
+    MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,filter_type: 'gp'}
+    MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,filter_type: 'gp'}
+    MASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,filter_type: 'gp'}
+    MASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,filter_type: 'gp'}
     # *_exp.csv contains data TEmp, Mass (5) pair. Gradient is then dM/dT. FDS outputs MLR 1/s. Need to convert
     # dm/dt = dT/dt * dM/dT = 20/60 K/s * dm / dT  or  10/60 K/s * dm / dT etc...
-    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True}
-    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.333,normalize: True,gradient: True}
-    GMASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0833,normalize: True,gradient: True}
-    GMASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.1666,normalize: True,gradient: True}
+    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True,filter_type: 'gp'}
+    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.333,normalize: True,gradient: True,filter_type: 'gp'}
+    GMASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0833,normalize: True,gradient: True,filter_type: 'gp'}
+    GMASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.1666,normalize: True,gradient: True,filter_type: 'gp'}
 obejctive:
-    type: "MSE"
+    type: "mse"
     var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
-    # Add more weight to the water evaporation by increasing the weight of temperature interval between 0 C and 110 C
     data_weights:
-      MASS2: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      MASS5: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      MASS10: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      MASS20: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      GMASS2: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      GMASS5: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      GMASS10: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
-      GMASS20: [(0.0,100.0),(110,100.0),(111,1.0),(800,1.0)]
+      # Add more weight to the water evaporation by increasing the weight of temperature interval between 0 C and 110 C
+      # weights can be read from a file (entries like in 'simulation' or 'experiment') or input as a list of tuples in the format
+      # [(x,w),(x,w),(x,w)] where x is the independent variable and w is th eweight
+      # weights will be interpolated to coincide with the experimental data
+      MASS2: [(0.0,1000.0),(190,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      MASS5: [(0.0,1000.0),(190,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      MASS10: [(0.0,1000.0),(190,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      MASS20: [(0.0,1000.0),(190,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      GMASS2: [(0.0,1000.0),(150,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      GMASS5: [(0.0,1000.0),(150,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      GMASS10: [(0.0,1000.0),(150,1000.0),(191,1.0),(400,1.0),(800,1.0)]
+      GMASS20: [(0.0,1000.0),(150,1000.0),(191,1.0),(400,1.0),(800,1.0)]
 plots:
     expMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
     expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
@@ -61,6 +64,7 @@ plots:
     simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
     cmpMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
     cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
+templates: ["birch_tga_1step_2.fds","birch_tga_1step_20.fds","birch_tga_1step_5.fds","birch_tga_1step_10.fds"]
 optimizer:
          base_estimator:        'ET'
          acq_func:              'EI'
@@ -68,5 +72,5 @@ optimizer:
          n_initial_points:      1 
          acq_optimizer_kwargs:  {n_points: 10000, n_restarts_optimizer": 100,n_jobs: 1}
          acq_func_kwargs:       {xi: 0.01, kappa: 1.96}
-templates: ["birch_tga_1step_2.fds","birch_tga_1step_20.fds","birch_tga_1step_5.fds","birch_tga_1step_10.fds"]
+
 
