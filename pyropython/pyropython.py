@@ -1,4 +1,4 @@
-from skopt import Optimizer,dump
+from skopt import Optimizer
 from skopt.learning import GaussianProcessRegressor
 from distutils.dir_util import copy_tree
 from shutil import rmtree
@@ -6,6 +6,7 @@ from shutil import rmtree
 from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 from multiprocessing import freeze_support
 from .model import Model 
+from .plotting import plot_feature_importance 
 import numpy as np
 from pandas import read_csv
 from scipy import signal
@@ -14,7 +15,7 @@ import time
 import sys
 import argparse
 from . import config as cfg
-import pickle
+import pickle as pkl
 from .utils import ensure_dir
 
 def initialize_model(cfg):
@@ -22,6 +23,30 @@ def initialize_model(cfg):
     return model
 
 
+def dump_result(cfg,optimizer):
+
+    config = {'num_jobs'           : cfg.num_jobs,
+              'max_iter'           : cfg.max_iter, 
+              'num_points'         : cfg.num_points,  
+              'num_initial'        : cfg.num_initial, 
+              'variables'          : cfg.variables,   
+              'exp_data'           : cfg.exp_data,   
+              'raw_data'           : cfg.raw_data, 
+              'cfg.raw_data'       : cfg.simulation, 
+              'experiments'        : cfg.experiment,
+              'plots'              : cfg.plots,      
+              'objective_function' : cfg.objective_function,
+              'objective_opts'     : cfg.objective_opts,
+              'data_weights'       : cfg.data_weights,
+              'var_weights'        : cfg.var_weights,
+              'fds_command'        : cfg.fds_command, 
+              'optimizer_opts'     : cfg.optimizer_opts,
+              'templates'          : cfg.templates,
+              'tempdir'            : cfg.tempdir}
+
+    with open('result.data', "wb") as f:
+        pkl.dump(config   , f)
+        pkl.dump(optimizer, f)  
 
 def optimize_model(model,cfg):
     # these can perhaps be changed later
@@ -95,8 +120,10 @@ def optimize_model(model,cfg):
         line = ["%d" % (i+1) ] + ["%.3f" % f for f in Xi] + ["%3f" % yi,"%3f" % y_best]
         log.write(",".join(line)+"\n")
     log.close()
-    print(x_best,y_best)  # print the best objective found 
-    dump(optimizer, 'result.gz', compress=9)
+    print("\nOptimization finished. The best result found was:")
+    for n,(name,bounds) in enumerate(cfg.variables):
+        print("{name} :".format(name=name), x_best[n])
+    dump_result(cfg,optimizer)
     return
     
 def proc_commandline(cfg):
@@ -125,7 +152,8 @@ def proc_commandline(cfg):
 def create_dirs():
     ensure_dir("Best/")
     ensure_dir("Work/")
-    ensure_dir("Iterations/")
+    ensure_dir("Figs/")
+    #ensure_dir("Iterations/")
     
 def main():
     proc_commandline(cfg)

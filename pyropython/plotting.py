@@ -7,6 +7,7 @@ from .utils import read_data, ensure_dir
 import argparse
 import os
 from .model import Model
+import sklearn.ensemble as skl  
 simulation_dir="Best/"
 output_dir="Figs/"
 
@@ -66,7 +67,32 @@ def plot_sim(cfg):
         plt.close()       
     return
     
-    
+def plot_feature_importance(cfg,result):
+    model  =result.models[-1]
+    X      =result.Xi
+    if not isinstance(model,skl.RandomForestRegressor) or not isinstance(model,skl.ExtraTreesRegressor):
+        return
+
+    importances =  model.feature_importances_
+    names       =  [name for name,bounds in cfg.params]
+    std = np.std([tree.feature_importances_ for tree in model.estimators_],
+             axis=0)
+    indices = np.argsort(importances)[::-1]
+
+    # Print the feature ranking
+    print("Feature ranking:")
+
+    for f in range(X.shape[1]):
+        print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
+    # Plot the feature importances of the forest
+    fig,ax = plt.subplots()
+    ax.title("Feature importances")
+    ax.bar(range(X.shape[1]), importances[indices],
+           color="r", yerr=std[indices], align="center")
+    ax.xticks(range(X.shape[1]), indices)
+    ax.xlim([-1, X.shape[1]])
+    plt.savefig("%s/feature_importances.pdf" % output_dir,bbox_inches="tight")
 
 def do_plotting(cfg):
     
