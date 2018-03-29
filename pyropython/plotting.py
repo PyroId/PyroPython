@@ -70,28 +70,31 @@ def plot_sim(cfg):
 def plot_feature_importance(cfg,result):
     model  =result.models[-1]
     X      =result.Xi
-    if not isinstance(model,skl.RandomForestRegressor) or not isinstance(model,skl.ExtraTreesRegressor):
+    if not (isinstance(model,skl.RandomForestRegressor) or isinstance(model,skl.ExtraTreesRegressor)):
         return
-
     importances =  model.feature_importances_
-    names       =  [name for name,bounds in cfg.params]
+    names       =  [name for name,bounds in cfg.variables]
     std = np.std([tree.feature_importances_ for tree in model.estimators_],
              axis=0)
     indices = np.argsort(importances)[::-1]
 
     # Print the feature ranking
     print("Feature ranking:")
-
-    for f in range(X.shape[1]):
-        print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
-
+    n_features = len(X[0])
+    for f in range(n_features):
+        print("{n}.  {var} : ({importance})".format( n= f + 1, 
+                                                     var = names[indices[f]],
+                                                     importance=importances[indices[f]]))
     # Plot the feature importances of the forest
     fig,ax = plt.subplots()
-    ax.title("Feature importances")
-    ax.bar(range(X.shape[1]), importances[indices],
+    ax.set_title("Feature importances")
+    ax.bar(range(n_features), importances[indices],
            color="r", yerr=std[indices], align="center")
-    ax.xticks(range(X.shape[1]), indices)
-    ax.xlim([-1, X.shape[1]])
+    ax.set_xticks(range(n_features))
+    ax.set_xticklabels([names[i] for i in indices])
+    ax.set_xlim([-1, n_features])
+    ax.set_xlabel("Variable")
+    ax.set_ylabel("Importance score")
     plt.savefig("%s/feature_importances.pdf" % output_dir,bbox_inches="tight")
 
 def do_plotting(cfg):
