@@ -28,7 +28,7 @@ objective_opts = {}
 data_weights = {}
 var_weights  = {}
 fds_command = "fds"
-optimizer_opts = {"base_estimator":       "ET",
+optimizer_opts = {"base_estimator":       "GP",
                   "acq_func":             "gp_hedge",
                   "acq_optimizer":        "auto",
                   "n_initial_points":      100,
