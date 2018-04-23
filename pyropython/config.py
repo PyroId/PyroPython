@@ -123,7 +123,8 @@ def _proc_input(cfg):
 
 def read_config(fname):
     global max_iter,num_jobs,num_points,num_initial,simulation,experiment,variables
-    global optimizer_opts,objective_function,data_weights,fds_command,plots
+    global optimizer_opts,objective_function,data_weights,fds_command,plots,var_weights
+    global data_weights
     lines=open(fname,"r").read()
     cfg = y.load(lines)
     # check sanity of input
