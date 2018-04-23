@@ -77,11 +77,11 @@ class Model:
              T,F = d
              etime,edata = self.exp_data[key] 
              # interpolate simulation data to experiment
-             Fi=np.interp(etime,T,F,left=0,right=0)
-             weight = self.var_weights[key]
+             Fi=np.interp(etime,T,F)
+             weight      = self.var_weights[key]
              weight_sum +=weight
-             opts =self.objective_opts
-             fit    = weight*self.objective_function(edata,Fi,self.data_weights[key],**opts)
+             opts        =self.objective_opts
+             fit        += weight*self.objective_function(edata,Fi,self.data_weights[key],**opts)
          fit = fit/weight_sum
          return fit,pwd 
 
