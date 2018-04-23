@@ -18,6 +18,7 @@ num_jobs    = 1
 max_iter    = 50 
 num_points  = 100
 num_initial = 100
+initial_design = "rand"
 exp_data    = {}
 raw_data    = {}
 simulation  = {}
@@ -142,6 +143,7 @@ def read_config(fname):
     num_jobs=cfg.get("num_jobs",-1)
     num_points=cfg.get("num_points",1)
     num_initial=cfg.get("num_initial",1) 
+    initial_design=cfg.get("initial_design","rand") 
     optimizer_opts["n_initial_points"]=num_initial
     optimizer_opts["acq_optimizer_kwargs"]["n_jobs"]=1
     optimizer_opts["acq_optimizer_kwargs"]["n_restarts_optimizer"]=num_jobs
@@ -153,7 +155,13 @@ def read_config(fname):
         objective_function = get_objective_function(objective_name)
         objective_opts = obj.get("objective_opts",{})
         data_weights   = obj.get("data_weights",{})
-        var_weights    = obj.get("var_weights",{})   
+        var_weights    = obj.get("var_weights",{}) 
+    else:
+        objective_name = "standardized_moment"
+        objective_function = get_objective_function(objective_name)
+        objective_opts = {}
+        data_weights   = {}
+        var_weights    = {}      
     _proc_input(cfg)
     
 def main():
