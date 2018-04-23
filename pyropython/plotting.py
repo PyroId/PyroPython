@@ -131,7 +131,25 @@ def do_plotting(cfg):
         ax.grid(True)
         print("%s/%s.pdf" % (output_dir,name))
         plt.savefig("%s/%s.pdf" % (output_dir,name),bbox_inches="tight")
-        plt.close()   
+        plt.close() 
+        print("Objective: %E" % check_fit(cfg))  
+
+def check_fit(cfg):
+        fit=0
+        data=read_fds_output(cfg)
+        weight_sum = 0.0
+        for key,d in data.items():
+             T,F = d
+             etime,edata = cfg.exp_data[key] 
+             # interpolate simulation data to experiment
+             Fi=np.interp(etime,T,F)
+             weight = cfg.var_weights[key]
+             weight_sum +=weight
+             opts =cfg.objective_opts
+             fit    += weight*cfg.objective_function(edata,Fi,cfg.data_weights[key],**opts)
+             print(key,weight,fit)
+        fit = fit/weight_sum
+        return fit
 
 def dump_data(cfg):
     smooth = []
