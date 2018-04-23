@@ -157,7 +157,7 @@ def read_config(fname):
         data_weights   = obj.get("data_weights",{})
         var_weights    = obj.get("var_weights",{}) 
     else:
-        objective_name = "standardized_moment"
+        objective_name = "mse"
         objective_function = get_objective_function(objective_name)
         objective_opts = {}
         data_weights   = {}
