@@ -45,7 +45,7 @@ objective_functions={"standardized_moment": standardized_moment,
                      "mse": mse,
                      "abs-dev": abs_dev}
 
-def get_objective_function(name="standardized_moment"):
+def get_objective_function(name="mse"):
     """
     Returns the objective function with the given name
     """
