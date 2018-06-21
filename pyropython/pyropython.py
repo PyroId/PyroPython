@@ -1,11 +1,10 @@
 from skopt import Optimizer
-import sklearn.ensemble as skl  
+import sklearn.ensemble as skl
 from distutils.dir_util import copy_tree
 from shutil import rmtree
-#from sklearn.externals.joblib import Parallel, delayed
 from concurrent.futures import ProcessPoolExecutor,ThreadPoolExecutor
 from multiprocessing import freeze_support
-from .model import Model 
+from .model import Model
 import numpy as np
 from pandas import read_csv
 from scipy import signal
@@ -16,6 +15,7 @@ import argparse
 from . import config as cfg
 import pickle as pkl
 from .utils import ensure_dir
+from pyDOE import lhs
 
 def initialize_model(cfg):
     model = Model()
@@ -23,38 +23,49 @@ def initialize_model(cfg):
 
 
 def dump_result(cfg,optimizer):
-
+"""
+This function saves the results of a run into a pickle object on disk
+Currently not used for anything
+"""
     config = {'num_jobs'           : cfg.num_jobs,
-              'max_iter'           : cfg.max_iter, 
-              'num_points'         : cfg.num_points,  
-              'num_initial'        : cfg.num_initial, 
-              'variables'          : cfg.variables,   
-              'exp_data'           : cfg.exp_data,   
-              'raw_data'           : cfg.raw_data, 
-              'cfg.raw_data'       : cfg.simulation, 
+              'max_iter'           : cfg.max_iter,
+              'num_points'         : cfg.num_points,
+              'num_initial'        : cfg.num_initial,
+              'variables'          : cfg.variables,
+              'exp_data'           : cfg.exp_data,
+              'raw_data'           : cfg.raw_data,
+              'cfg.raw_data'       : cfg.simulation,
               'experiments'        : cfg.experiment,
-              'plots'              : cfg.plots,      
+              'plots'              : cfg.plots,
               'objective_function' : cfg.objective_function,
               'objective_opts'     : cfg.objective_opts,
               'data_weights'       : cfg.data_weights,
               'var_weights'        : cfg.var_weights,
-              'fds_command'        : cfg.fds_command, 
+              'fds_command'        : cfg.fds_command,
               'optimizer_opts'     : cfg.optimizer_opts,
               'templates'          : cfg.templates,
               'tempdir'            : cfg.tempdir}
 
     with open('result.data', "wb") as f:
         pkl.dump(config   , f)
-        pkl.dump(optimizer, f)  
+        pkl.dump(optimizer, f)
 
 def optimize_model(model,cfg):
-    # these can perhaps be changed later
+"""
+Main optimization loop
+"""
+    # these can perhaps be changed later to use MPI
+    # The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
+    # The Model class and associated functions are not thread safe.
     ex = ProcessPoolExecutor(cfg.num_jobs)
     optimizer = Optimizer(dimensions=model.get_bounds(),
                           **cfg.optimizer_opts)
 
     # Convenience functions
     def evaluate(x):
+        """
+        This function evaluates the model finess at points x
+        """
         print("Evaluating %d points." % len(x), end='', flush=True)
         t0 = time.perf_counter()
         out =  list(ex.map(model.fitness, x)) # evaluate points in parallel
@@ -63,6 +74,9 @@ def optimize_model(model,cfg):
         print(" Complete in %.3f seconds" % (t1-t0))
         return y,pwd
     def ask(num_points):
+        """
+        This function asks the optimizer for more points
+        """
         print("Asking for points.", end='', flush=True)
         t0 = time.perf_counter()
         x = optimizer.ask(n_points=num_points)  # x is a list of n_points points
@@ -70,18 +84,32 @@ def optimize_model(model,cfg):
         print(" Complete in %.3f seconds" % (t1-t0))
         return x
     def tell(x,y):
+        """
+        This function tells the optimizer some new points. 
+        """
         print("Teaching points.", end='', flush=True)
         t0 = time.perf_counter()
         optimizer.tell(x, y)
         t1 = time.perf_counter()
         print(" Complete in %.3f seconds" % (t1-t0))
 
-    # initial design (random)
     log=open("log.csv","w",buffering=1)
     header = ",".join(["Iteration"]+[name for name,bounds in cfg.variables]+["Objective","Best Objective"])
     log.write(header+"\n")
     print("picking initial points")
-    x = ask(cfg.num_initial)
+    # initial design (random) or lhs
+    print(cfg.initial_design)
+    if cfg.initial_design == "lhs":
+        ndim = len(model.get_bounds())
+        xhat = lhs(cfg.num_initial,ndim,"maximin").T
+        xhat = [list(point) for point in xhat]
+        x =xhat
+        for i,point in enumerate(x):
+            for n,(xmin,xmax) in enumerate(model.get_bounds()):
+                x[i][n] = xmin+xhat[i][n]*(xmax-xmin) # Note that point is reference to element of x
+    else:
+        x = ask(cfg.num_initial)
+
     y,pwd = evaluate(x)
     ind = np.argmin(y)
     yi = y[ind]
@@ -95,8 +123,8 @@ def optimize_model(model,cfg):
     # Explicitly clean up temp direcotries
     for p in pwd:
         rmtree(p)
-    # Main iteration loop  
-    for i in range(cfg.max_iter): 
+    # Main iteration loop
+    for i in range(cfg.max_iter):
         print("Iteration {i}/{N}:".format(i=i,N=cfg.max_iter))
         # teach points
         tell(x,y)
@@ -111,7 +139,7 @@ def optimize_model(model,cfg):
             copy_tree(pwd[ind], "Best")
             y_best = yi
             x_best = Xi
-        
+
         # Explicitly clean up temp direcotries
         for p in pwd:
             rmtree(p)
@@ -135,8 +163,8 @@ def optimize_model(model,cfg):
 
     # For tree based metamodels, also output variable importance
     forest  =optimizer.models[-1]
-    if isinstance(forest,skl.RandomForestRegressor) or isinstance(forest,skl.ExtraTreesRegressor):    
-            X      =optimizer.Xi            
+    if isinstance(forest,skl.RandomForestRegressor) or isinstance(forest,skl.ExtraTreesRegressor):
+            X      =optimizer.Xi
             importances =  forest.feature_importances_
             names       =  [name for name,bounds in cfg.variables]
             std         =  np.std([tree.feature_importances_ for tree in forest.estimators_],axis=0)
@@ -145,12 +173,12 @@ def optimize_model(model,cfg):
             print("\nVariable importance scores:")
             n_features = len(X[0])
             for f in range(n_features):
-                print("{n}.  {var} : ({importance:.3f})".format( n= f + 1, 
+                print("{n}.  {var} : ({importance:.3f})".format( n= f + 1,
                                                              var = names[indices[f]],
                                                              importance=importances[indices[f]]))
     dump_result(cfg,optimizer)
     return
-    
+
 def proc_commandline(cfg):
     parser = argparse.ArgumentParser()
     parser.add_argument("fname",help="Input file name")
@@ -179,7 +207,7 @@ def create_dirs():
     ensure_dir("Work/")
     ensure_dir("Figs/")
     #ensure_dir("Iterations/")
-    
+
 def main():
     proc_commandline(cfg)
     print("initializing")

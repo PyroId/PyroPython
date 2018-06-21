@@ -27,15 +27,15 @@ Easiest way to install the prerequisites
 ```
 Matplotlib and numpy should already be included in the download of anaconda, if you downloaded miniconda or otherwise are missing packages:
 ```
- conda install numpy scipy matploltib 
+ conda install numpy scipy matplotlib 
 ```
 
 ## Usage
-
+ 
 Test installation by typing:
 
 ```
- python pyropython.py -h
+ python run_pyropython.py -h
 
 ```
 
@@ -160,8 +160,8 @@ variables:
 #experiment - experimental data in same format
 #   Var_name: data_file, col name, conversion factor
 simulation:
-    MLR: ['cone_hrr.csv','MLR_TOTAL',100000]
-    HRR: ['cone_hrr.csv','HRR',100]
+    MLR: {fname: 'cone_hrr.csv',dep_col_name:'MLR_TOTAL',100000]
+    HRR: {fname: 'cone_hrr.csv','HRR',100]
 experiment:
     MLR: ['09090043_red.CSV','Specific MLR',1.0]
     HRR: ['09090043_red.CSV','HRR',1.0]
@@ -169,7 +169,7 @@ experiment:
 #The following fields are optional:
 # Options for objective function
 objective:
-    type: "RMSE" # TODO: add more objective functions
+    type: "mse" # TODO: add more objective functions
     weights: {'MLR': 1.0, 'HRR': 0.0}
 # Information for plot_comp.py. Note that the results of the best run need to be in the Best/ directory.
 plotting:

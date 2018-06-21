@@ -2,8 +2,7 @@ TITLE
  TGA TEST of evaporation
 
 FDSVERSION
-FDS 6.6.0
-FDS6.6.0-131-g88ae75a-HEAD
+FDS6.6.0-1706-gf4daa65-master
 
 ENDF
  birch_tga_1step_10.end
@@ -16,6 +15,9 @@ Revisio
 
 CHID
  birch_tga_1step_10
+
+SOLID_HT3D
+  0
 
 CSVF
  hrr
