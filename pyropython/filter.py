@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 
 
-"""pyropython.filter: Data filtering functions for smoothing experimental data"""
+"""
+pyropython.filter: Data filtering functions for smoothing experimental data
+"""
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern,WhiteKernel,ConstantKernel
+from sklearn.gaussian_process.kernels import Matern, WhiteKernel,\
+                                             ConstantKernel
 import numpy as np
 import scipy.signal as signal
 
 
-
-def gp_filter(x,y,
+def gp_filter(x, y,
               nu=2.5,
               length_scale=1.0,
               length_scale_bounds=(1e-05, 100000.0),
@@ -18,17 +20,20 @@ def gp_filter(x,y,
               noise_level_bounds=(1e-05, 100000.0),
               **kwargs):
 
-  """
-  This 'filter' fits a GaussianProcessRegressor with added white noise kernel to the data.
-  The smoothed value is obtained as predictions from the fitted model.
-  Advantages:  Handles uneaqually sampled data, automatically adjusts parameters
-  Disadvantages: Slow, automatic.
-  """
-  kernel = ConstantKernel()*Matern(length_scale=length_scale,length_scale_bounds=length_scale_bounds,nu=2.5) +\
-           WhiteKernel(noise_level=noise_level,noise_level_bounds=noise_level_bounds)
-  gp = GaussianProcessRegressor(kernel=kernel,normalize_y=True)
-  gp.fit(x[:,np.newaxis],y[:,np.newaxis])
-  return np.squeeze(gp.predict(x[:,np.newaxis]))
+    """
+    This 'filter' fits a GaussianProcessRegressor with added white noise kernel to the data.
+    The smoothed value is obtained as predictions from the fitted model.
+    Advantages:  Handles uneaqually sampled data, automatically adjusts parameters
+    Disadvantages: Slow, automatic.
+    """
+    kernel = ConstantKernel() *\
+             Matern(length_scale=length_scale,
+                    length_scale_bounds=length_scale_bounds, nu=2.5) +\
+             WhiteKernel(noise_level=noise_level,
+                         noise_level_bounds=noise_level_bounds)
+    gp = GaussianProcessRegressor(kernel=kernel,normalize_y=True)
+    gp.fit(x[:, np.newaxis],y[:, np.newaxis])
+    return np.squeeze(gp.predict(x[:, np.newaxis]))
 
 def butterworth_filter(x,y,cutoff=0.0125,width=0.0125,**kwargs):
   """
@@ -102,7 +107,7 @@ filter_types = {"gp": gp_filter,
 
 def get_filter(name):
   if name.lower() not in filter_types:
-    sys.exit("Warning: unknown filter type %s." % name.lower())
+    raise ValueError("Warning: unknown filter type %s." % name.lower())
   return filter_types.get(name.lower(), none_filter)
 
 def main():

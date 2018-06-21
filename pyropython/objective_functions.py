@@ -5,26 +5,27 @@ Created on Thu Mar 22 15:02:16 2018
 @author: tstopi
 """
 
-from numpy import mean,abs,var
-import sys
+from numpy import mean, abs, var
 
 
-def mse(edata,sdata,weights,**kwargs):
+def mse(edata, sdata, weights, **kwargs):
     """
         standardized mean squared error
         the value of the standardized moment with p=2
             E[(sum_i ( w_i *(y_i-yhat_i) )^2]/std(w*y)^2
     """
-    return standardized_moment(edata,sdata,weights,p=2)
+    return standardized_moment(edata, sdata, weights, p=2)
 
-def abs_dev(edata,sdata,weights,**kwargs):
+
+def abs_dev(edata, sdata, weights, **kwargs):
     """
         standardized absollute deviation
         the value of the standardized moment
     """
-    return standardized_moment(edata,sdata,weights,p=1)
+    return standardized_moment(edata, sdata, weights, p=1)
 
-def standardized_moment(edata,sdata,weights,p=1):
+
+def standardized_moment(edata, sdata, weights, p=1):
     """
     Measure based on standardized moment:
         E[(sum_i ( w_i *(y_i-yhat_i) )^p]/std(w*y)^p
@@ -42,9 +43,11 @@ def standardized_moment(edata,sdata,weights,p=1):
     dev = (weights*abs(edata-sdata))**p
     return mean(dev)/var(weights*edata)**(p/2.0)
 
-objective_functions={"standardized_moment": standardized_moment,
-                     "mse": mse,
-                     "abs-dev": abs_dev}
+
+objective_functions = {"standardized_moment": standardized_moment,
+                       "mse": mse,
+                       "abs-dev": abs_dev}
+
 
 def get_objective_function(name="mse"):
     """

@@ -5,107 +5,103 @@ import subprocess
 from . import config as cfg
 from jinja2 import Template
 from .utils import read_data
-from .objective_functions import get_objective_function
 import sys
 
 
 class Model:
-     def __init__(self):
-         self.exp_data           = cfg.exp_data
-         self.params             = cfg.variables
-         self.simulation         = cfg.simulation
-         self.var_weights        = cfg.var_weights
-         self.data_weights       = cfg.data_weights
-         self.templates          = cfg.templates
-         self.command            = cfg.fds_command
-         self.tempdir            = cfg.tempdir
+    def __init__(self):
+         self.exp_data = cfg.exp_data
+         self.params = cfg.variables
+         self.simulation = cfg.simulation
+         self.var_weights = cfg.var_weights
+         self.data_weights = cfg.data_weights
+         self.templates = cfg.templates
+         self.command = cfg.fds_command
+         self.tempdir = cfg.tempdir
          self.objective_function = cfg.objective_function
-         self.objective_opts     = cfg.objective_opts
+         self.objective_opts = cfg.objective_opts
 
-     def initialize(self,**kwargs):
+    def initialize(self, **kwargs):
         for key in kwargs:
             if key in self.fields:
                 setattr(self, key, kwargs[key])
             else:
                 raise Exception('invalid attribute: {0}'.format(key))
 
-     def write_fds_file(self,outname,template,x):
-        f=open(outname,"tw")
-        template=Template(template)
-        variables = {self.params[n][0]: var for n,var in enumerate(x)}
+    def write_fds_file(self, outname, template, x):
+        f = open(outname, "tw")
+        template = Template(template)
+        variables = {self.params[n][0]: var for n, var in enumerate(x)}
         outfile = template.render(**variables)
         f.writelines(outfile)
         f.flush()
         f.close()
 
-     def run_fds(self,x):
+    def run_fds(self, x):
         cwd = os.getcwd()
-        tempfile.tempdir=self.tempdir
+        tempfile.tempdir = self.tempdir
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
         pwd = tempfile.mkdtemp(prefix="Cone_")
         os.chdir(pwd)
         devnull = open(os.devnull, 'w')
-        for fname,template in self.templates:
-            outname = os.path.join(pwd,fname)
-            self.write_fds_file(outname,template,x)
-            proc = subprocess.Popen([self.command,fname],
-                                    env = my_env,
+        for fname, template in self.templates:
+            outname = os.path.join(pwd, fname)
+            self.write_fds_file(outname, template, x)
+            proc = subprocess.Popen([self.command, fname],
+                                    env=my_env,
                                     cwd=pwd,
-                                    stderr = devnull,
-                                    stdout = devnull)
+                                    stderr=devnull,
+                                    stdout=devnull)
             proc.wait()
         devnull.close()
         data = self.read_fds_output()
         os.chdir(cwd)
-        return data,pwd
+        return data, pwd
 
-     def read_fds_output(self, directory=""):
-        data={}
-        for key,line in self.simulation.items():
-             T,F = read_data(**line) 
-             data[key]=T,F
+    def read_fds_output(self, directory=""):
+        data = {}
+        for key, line in self.simulation.items():
+            T, F = read_data(**line)
+            data[key] = T, F
         return data
-        
-             
-     def fitness(self, x):
-         fit=0
-         x=np.reshape(x,len(self.params))
-         data,pwd = self.run_fds(x)
-         weight_sum = 0.0
-         for key,d in data.items():
-             T,F = d
-             etime,edata = self.exp_data[key] 
-             # interpolate simulation data to experiment
-             Fi=np.interp(etime,T,F)
-             weight      = self.var_weights[key]
-             weight_sum +=weight
-             opts        =self.objective_opts
-             fit        += weight*self.objective_function(edata,Fi,self.data_weights[key],**opts)
-         fit = fit/weight_sum
-         return fit,pwd 
 
+    def fitness(self, x):
+        fit = 0
+        x = np.reshape(x, len(self.params))
+        data, pwd = self.run_fds(x)
+        weight_sum = 0.0
+        for key, d in data.items():
+            T, F = d
+            etime, edata = self.exp_data[key]
+            # interpolate simulation data to experiment
+            Fi = np.interp(etime, T, F)
+            weight = self.var_weights[key]
+            weight_sum += weight
+            opts = self.objective_opts
+            fit += weight*self.objective_function(edata, Fi,
+                                                  self.data_weights[key],
+                                                  **opts)
+        fit = fit/weight_sum
+        return fit, pwd
 
-
-     def get_bounds(self):
-         return [tuple(bounds) for name,bounds in self.params]
-     
+    def get_bounds(self):
+        return [tuple(bounds) for name, bounds in self.params]
 
 
 def main():
-    fname=sys.argv[1]
+    fname = sys.argv[1]
     cfg.read_config(fname)
     model = Model(exp_data=cfg.exp_data,
-                        params=cfg.variables,
-                        simulation=cfg.simulation,
-                        fds_command=cfg.fds_command,
-                        template=open(cfg.fname,"r").read())
-    x=[np.mean(x) for x in model.get_bounds()]
+                  params=cfg.variables,
+                  simulation=cfg.simulation,
+                  fds_command=cfg.fds_command,
+                  template=open(cfg.fname, "r").read())
+    x = [np.mean(x) for x in model.get_bounds()]
     fit = model.fitness(x)
     print(fit)
     return
 
+
 if __name__ == "__main__":
     main()
-
-
