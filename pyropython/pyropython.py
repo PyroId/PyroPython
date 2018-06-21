@@ -23,10 +23,10 @@ def initialize_model(cfg):
 
 
 def dump_result(cfg,optimizer):
-"""
-This function saves the results of a run into a pickle object on disk
-Currently not used for anything
-"""
+    """
+        This function saves the results of a run into a pickle object on disk
+        Currently not used for anything
+    """
     config = {'num_jobs'           : cfg.num_jobs,
               'max_iter'           : cfg.max_iter,
               'num_points'         : cfg.num_points,
@@ -51,9 +51,9 @@ Currently not used for anything
         pkl.dump(optimizer, f)
 
 def optimize_model(model,cfg):
-"""
-Main optimization loop
-"""
+    """
+    Main optimization loop
+    """
     # these can perhaps be changed later to use MPI
     # The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
     # The Model class and associated functions are not thread safe.
@@ -85,7 +85,7 @@ Main optimization loop
         return x
     def tell(x,y):
         """
-        This function tells the optimizer some new points. 
+        This function tells the optimizer some new points.
         """
         print("Teaching points.", end='', flush=True)
         t0 = time.perf_counter()
