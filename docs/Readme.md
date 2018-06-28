@@ -251,10 +251,7 @@ The keywords under the **objective** key are:
     1. **type**: objective function type. Choices are: "standardized_moment" (need to define p), "mse" (p=2) and "abs-dev" (p=1). The default is "mse" (mean squared error).
     2. **var_weights** Weight given to each  variable. By default each variable has equal weight.
     3. **data_weights** Weights for individual observations.  Weights can be read from a file (entries like in 'simulation' or 'experiment') or input as a list of tuples in the format [(x,w),(x,w),(x,w)] where x is the independent variable and w is the weight. Weights will be interpolated to coincide with the experimental data
-    4. **objective_opts**: options passed to the objective function. Only useful if type is "standardzed moment". In this case "p" can be defined. 
-
-
-
+    4. **objective_opts**: options passed to the objective function. Only useful if type is "standardzed moment". In this case "p" can be defined.
 ```
 obejctive:
     type: "mse"
@@ -265,16 +262,43 @@ obejctive:
 ```
 
 ### Plotting
+Pyropyhton contains a rudimentary plotting tool to quickly inspect the experimental data, simulation results and goodness of fit.
+If you installed the package using *pip*, you can get the plots by typing
+```
+plot_pyro config.yml
+```
+Otherwise, you may use
+```
+python /path/to/pyropython/plot_comp.py  config.yml
+```
+
+Figures can then be found in the Figs directory.
+
+The figures to be drawn are definet in the *config.yml* file as follows:
+```
+plots:
+    PLOTNAME:
+        variables: ["VAR1","VAR2" ....] - variables to be plotted in the figure. Use KEYs defined in the *simulation* and *experiment* sections
+        labels: ["VAR1 label","VAR2 label" , ...]
+        type: "experimental", "simulation" or "comparison"
+        ylabel: "label for y-axis"
+        xlabel: "label for x-axis"
+```
+The *type* argument options are:
+    1. *experiment*: Useful for investigating the effects of the data filters. Plots the raw data and corresponding smoothed data
+    2. *simulation*: Useful for investigating the effects of the data filters amd reading output.
+    3. *comparison*: Useful for investigating goodness of fit.  
+
+For example, in the Birch_TGA_Eample:
 ```
 plots:
     expMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
-    expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
-    simMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+
     simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
-    cmpMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+
     cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
 ```
-
+These will create plots expMASS.pdf, simGMASS.pdf and cmpGMASS.pdf in the Figs directory.
 
 
 
