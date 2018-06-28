@@ -94,7 +94,7 @@ def optimize_model(model, cfg):
         t1 = time.perf_counter()
         print(" Complete in %.3f seconds" % (t1-t0))
 
-    log = open("log.csv" "w", buffering=1)
+    log = open("log.csv", "w", buffering=1)
     header = ",".join(["Iteration"] +
                       [name for name, bounds in cfg.variables] +
                       ["Objective", "Best Objective"])
