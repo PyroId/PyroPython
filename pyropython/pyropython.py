@@ -11,7 +11,7 @@ import argparse
 from . import config as cfg
 import pickle as pkl
 from .utils import ensure_dir
-from pyDOE import lhs
+
 
 
 def initialize_model(cfg):
@@ -101,8 +101,19 @@ def optimize_model(model, cfg):
     log.write(header+"\n")
     print("picking initial points")
     # initial design (random) or lhs
-    print(cfg.initial_design)
     if cfg.initial_design == "lhs":
+        try:
+            from pyDOE import lhs
+        except ImportError:
+            print("Latin hypercube smapling requires pyDOE.\
+                   Using random sampling")
+        cfg.initial_design="rand"
+
+    if cfg.initial_design == "lhs":
+        try:
+            from pyDOE import lhs
+        except ImportError:
+            print("")
         ndim = len(model.get_bounds())
         xhat = lhs(cfg.num_initial, ndim, "maximin").T
         xhat = [list(point) for point in xhat]
