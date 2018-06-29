@@ -1,15 +1,6 @@
 # PyroPython -- Parameter estimation for FDS pyrolysis models in python
 
-This is simple parameter identification  tool  for FDS. The program is divided into three parts:
-
-model.py - this file contains the class Model. Contains functions for reading data files, fitness evaluation and running FDS and post processing FDS outputs
-config.py - provides configuration management
-plot_comp.py - plotting results.
-pyropython.py - tool for commandline
-
-Currently all these files need to be in the same directory.
-
-Currently the program uses scikit optimize [https://github.com/scikit-optimize/scikit-optimize] to optimize the model. Scikit-optimize uses sequential model-based optimization (also known as Bayesian Optimization).  The optimization uses a response surface fitted to the model evaluations to guide the optimization. TODO: add GAs such as shuffled-complex-evolution. (possibly using SPOTPY [http://fb09-pasig.umwelt.uni-giessen.de/spotpy/])
+This is simple parameter identification  tool  for FDS.  Currently the program uses scikit optimize [https://github.com/scikit-optimize/scikit-optimize] to optimize the model. Scikit-optimize uses sequential model-based optimization (also known as Bayesian Optimization).  The optimization uses a response surface fitted to the model evaluations to guide the optimization. TODO: add GAs such as shuffled-complex-evolution. (possibly using SPOTPY [http://fb09-pasig.umwelt.uni-giessen.de/spotpy/])
 
 ## Prerequisites
 
@@ -82,10 +73,10 @@ python /path/to/run_pyropython.py config.yml
 ```
 or, if you installed the package:
 ```
-pyropyhton config.yml
+pyropython config.yml
 ```
 
-In additon to the configuration file, template file(/s) are also needed. These should be valid Jinja2 [http://jinja.pocoo.org/docs/2.10/] templates that produce FDS files.  
+In additon to the configuration file, template file(s) are also needed. These should be valid Jinja2 [http://jinja.pocoo.org/docs/2.10/] templates that produce FDS files.  
 
 2. The Variables that are to be optimized shall be replaced with {{variable name}} (e.g. the variable name surrounded by double curly brackets).  For example, variables are defined in the yaml file as:
 
@@ -125,9 +116,9 @@ $MATL ID="test"
 /
 
 {% for number in range(0,600,100) %}
-  &RAMP ID="CP" , T={{number}} F={{a*number**2+b}}/ {% endfor %}
+  &RAMP ID="CP" , T={{number}} F={{a*number**2+b}}/
+{% endfor %}
 ```
-
 The for loop at the bottom of the previous example will create a "RAMP from 0 to 600 with step size 100 using with the ramp values calculated from second degree polynomial with parameters a and b. For example, with parameters a=0.01 and b=2 the ramp resulting file will contain:
 ```
 ...
@@ -203,48 +194,57 @@ Note that since *A* is logarithmic, with the optimization variable referring to 
 
 These two lists describe the data files,f rom  where the variables to be compared can be read. The data files are expected to be typical cone calorimeter output files with one header row and the column names in format "**col_name** (units)". The simulation data files are assumed to be standard FDS output files, with two header rows. The first header row, containing unit information, is skipped.
 Each file description is given in format similar to a python dictionary with optional and required fields
-    - KEY: {
-        fname: Filename to be read. Assummed to be a comma delimited text file with one (experimental files) or two (simulation output files) header rows **required**
-        ind_col_name: Name of the *independent* variable columns, default (Time)
-        dep_col_name: Name of the column holding the *dependent* variable (e.g. MLR) **required**
-        conversion_factor: conversion factor for converting from e.g. g to kg (i.e, c in  y=c*x)
-        filter_type: filter used for smoothing the data. Choices "gp","ma". Default None.
-        gradient: numerical gradient of the variable will be used for optimization
-        normalize: TGA normalization, i.e. y=y/y[0].
-        }
+
+KEY:
+:  **fname**: Filename to be read. Assummed to be a comma delimited text file with one (experimental files) or two (simulation output files) header rows **required**
+:  **ind_col_name**: Name of the *independent* variable columns, default (Time)
+:  **dep_col_name**: Name of the column holding the *dependent* variable (e.g. MLR) **required**
+:  **conversion_factor**: conversion factor for converting from e.g. g to kg (i.e, c in  y=c*x)
+:  **filter_type**: filter used for smoothing the data. Choices "gp","ma". Default None.
+:  **gradient**: numerical gradient of the variable will be used for optimization
+:  **normalize**: TGA normalization, i.e. y=y/y[0].        }
 
 Note that the program attempts to strip possible unit information from column name. This means that "MLR (kg/s)" becomes just "MLR".  
 
 For example, in the Birch_TGA_example:
 ```
 simulation:
-    MASS2: {fname: 'birch_tga_1step_2_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0}
-
+    MASS2: {fname: 'birch_tga_1step_2_tga.csv',
+            dep_col_name: 'Mass',ind_col_name: 'Temp',
+            conversion_factor: 1.0}
 experiment:
-    MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 1.0,normalize: True,filter_type: 'gp'}
-
-    # *_exp.csv contains data TEmp, Mass (5) pair. Gradient is then dM/dT. FDS outputs MLR 1/s. Need to convert
-    # dm/dt = dT/dt * dM/dT = 20/60 K/s * dm / dT  or  10/60 K/s * dm / dT etc...
-    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True,filter_type: 'gp'}
-
+    MASS2: {fname: 'birch_tga_2_exp.csv',
+            dep_col_name: 'Mass',
+            ind_col_name: 'Temp',
+            conversion_factor: 1.0,
+            normalize: True,
+            filter_type: 'gp'}
+    # dm/dt = dT/dt * dM/dT = 20/60 K/s * dm / dT  
+    # or  10/60 K/s * dm / dT etc...
+    GMASS2: {fname: 'birch_tga_2_exp.csv',
+             dep_col_name: 'Mass',
+             ind_col_name: 'Temp',
+             conversion_factor: 0.0333,
+             normalize: True,gradient: True,
+             filter_type: 'gp'}
 ```
-
 
 In addition, the template file(s) must be defined. These are given on the **templates** line as a list of template files:
 ```
-templates: ["birch_tga_1step_2.fds","birch_tga_1step_20.fds","birch_tga_1step_5.fds","birch_tga_1step_10.fds"]
+templates: ["birch_tga_1step_2.fds",...,"birch_tga_1step_10.fds"]
 ```
 Pyropython will render each of these templates and run FDS on every input file before evaluating the results. Note that the template files are assumed to be in the same working directory as the config.yml file.
 
 ### Objective function options
 
 Currently all objective functions are based on standardized moment:
+```
      E[(sum_i ( w_i * (y_i-yhat_i) )^p]/std(w * y)^p
 where:
         y_i   , experimental data
         yhat_i, simulation
         w_i   , data weights.
-
+```
 Note that the program automatically interpolates the simulatioin result to coincide with the experimental data.
 
 The keywords under the **objective** key are:
@@ -255,14 +255,15 @@ The keywords under the **objective** key are:
 ```
 obejctive:
     type: "mse"
-    var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
+    var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,
+                  'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
     data_weights:
       MASS2: [(0.0,1000.0),(190,1000.0),(191,1.0),(400,1.0),(800,1.0)]
       ....
 ```
 
 ### Plotting
-Pyropyhton contains a rudimentary plotting tool to quickly inspect the experimental data, simulation results and goodness of fit.
+Pyropython contains a rudimentary plotting tool to quickly inspect the experimental data, simulation results and goodness of fit.
 If you installed the package using *pip*, you can get the plots by typing
 ```
 plot_pyro config.yml
@@ -274,17 +275,22 @@ python /path/to/pyropython/plot_comp.py  config.yml
 
 Figures can then be found in the Figs directory.
 
-The figures to be drawn are definet in the *config.yml* file as follows:
+The figures to be drawn are defined in the *config.yml* file as follows:
 ```
 plots:
-    PLOTNAME:
-        variables: ["VAR1","VAR2" ....] - variables to be plotted in the figure. Use KEYs defined in the *simulation* and *experiment* sections
-        labels: ["VAR1 label","VAR2 label" , ...]
-        type: "experimental", "simulation" or "comparison"
-        ylabel: "label for y-axis"
-        xlabel: "label for x-axis"
+    PLOTNAME1: {variables:, labels:, type:,....}
+    PLOTNAME2: {variables:, labels:, type:,....}  
 ```
-The *type* argument options are:
+
+Meanings  of the keywords are:
+
+:  **PLOTNAME**: name of output file (the file will be called PLOTNAME.pdf)
+:  **variables**: ["VAR1","VAR2" ....] - variables to be plotted in the figure. Use KEYs defined in the *simulation* and *experiment* sections
+:  **labels**: ["VAR1 label","VAR2 label" , ...]
+:  **type**: "experimental", "simulation" or "comparison"
+:  **ylabel**: "label for y-axis"
+:  **xlabel**: "label for x-axis"
+: The *type* argument options are:
     1. *experiment*: Useful for investigating the effects of the data filters. Plots the raw data and corresponding smoothed data
     2. *simulation*: Useful for investigating the effects of the data filters amd reading output.
     3. *comparison*: Useful for investigating goodness of fit.  
@@ -301,10 +307,9 @@ plots:
 These will create plots expMASS.pdf, simGMASS.pdf and cmpGMASS.pdf in the Figs directory.
 
 
-
 ### Optimizer options
 These options are passed to the optimizer. This keyword can be omitted.
-````
+```
 optimizer:
          base_estimator:        'ET'
          acq_func:              'EI'
@@ -313,10 +318,6 @@ optimizer:
          acq_optimizer_kwargs:  {n_points: 100000, n_restarts_optimizer": 100,n_jobs: 1}
          acq_func_kwargs:       {xi: 0.01, kappa: 1.96}
 ```
-
-
-
-
 
 ## Running
 
