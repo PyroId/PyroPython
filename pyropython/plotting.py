@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from . import config as cfg
 from .utils import read_data, ensure_dir
+from .config import read_plots
 import argparse
 import os
 from .model import Model
@@ -26,7 +26,7 @@ def proc_commandline():
     args = parser.parse_args()
     simulation_dir = args.simulation_dir
     output_dir = args.output_dir
-    cfg.read_config(args.fname)
+    cfg = read_plots(args.fname)
     return cfg
 
 
@@ -48,11 +48,11 @@ def plot_exp(cfg):
 
 
 def read_fds_output(cfg):
-        data = {}
-        for key, line in cfg.simulation.items():
-            T, F = read_data(**line, cwd=simulation_dir)
-            data[key] = T, F
-        return data
+    data = {}
+    for key, line in cfg.simulation.items():
+        T, F = read_data(**line, cwd=simulation_dir)
+        data[key] = T, F
+    return data
 
 
 def plot_sim(cfg):
@@ -82,7 +82,7 @@ def plot_feature_importance(cfg, result):
     importances = model.feature_importances_
     names = [name for name, bounds in cfg.variables]
     std = np.std([tree.feature_importances_ for tree in model.estimators_],
-             axis=0)
+                 axis=0)
     indices = np.argsort(importances)[::-1]
 
     # Print the feature ranking
@@ -131,7 +131,8 @@ def do_plotting(cfg):
                 label = line['labels'][var_num]
                 if line['type'] == "comparison":
                     label = label + " (sim)"
-                ax.plot(stime, sdata, label=label, color=colors[var_num], linestyle=lty)
+                ax.plot(stime, sdata, label=label,
+                        color=colors[var_num], linestyle=lty)
 
         plt.legend()
         ax.set_xlabel(line["xlabel"])
@@ -140,63 +141,30 @@ def do_plotting(cfg):
         print("%s/%s.pdf" % (output_dir, name))
         plt.savefig("%s/%s.pdf" % (output_dir, name), bbox_inches="tight")
         plt.close()
-        print("Objective: %E" % check_fit(cfg))
+        #print("Objective: %E" % check_fit(cfg))
 
 
 def check_fit(cfg):
-        fit = 0
-        data = read_fds_output(cfg)
-        weight_sum = 0.0
-        for key, d in data.items():
-            T, F = d
-            etime, edata = cfg.exp_data[key]
-            # interpolate simulation data to experiment
-            Fi = np.interp(etime, T, F)
-            weight = cfg.var_weights[key]
-            weight_sum += weight
-            opts = cfg.objective_opts
-            fit += weight*cfg.objective_function(edata, Fi,
-                                                 cfg.data_weights[key], **opts)
-            print(key, weight, fit)
-        fit = fit/weight_sum
-        return fit
-
-
-def dump_data(cfg):
-    smooth = []
-    sim = []
-    for key, (etime, edata) in cfg.exp_data.items():
-        smooth.append(etime)
-        smooth.append(edata)
-        print(key, np.mean(edata))
-    smooth = np.vstack(smooth)
-    np.savetxt("smooth.csv", smooth.T, header=",".join(cfg.exp_data.keys()))
-    try:
-        fds_data = read_fds_output(cfg)
-    except:
-        print("No FDS data available")
-        return
-    for key, (stime, sdata) in fds_data.items():
-        sim.append(stime)
-        sim.append(sdata)
-        print(key, np.mean(sdata))
-    sim = np.vstack(sim)
-    np.savetxt("sim.csv", sim.T, header=",".join(fds_data.keys()))
-
-    model = Model(exp_data=cfg.exp_data,
-                  params=cfg.variables,
-                  simulation=cfg.simulation,
-                  fds_command=cfg.fds_command,
-                  templates=cfg.templates,
-                  data_weights=cfg.data_weights)
-    print("fit:", model.fitnessfunc(cfg.exp_data, fds_data))
-    return
-
+    fit = 0
+    data = read_fds_output(cfg)
+    weight_sum = 0.0
+    for key, d in data.items():
+        T, F = d
+        etime, edata = cfg.exp_data[key]
+        # interpolate simulation data to experiment
+        Fi = np.interp(etime, T, F)
+        weight = cfg.var_weights[key]
+        weight_sum += weight
+        opts = cfg.objective_opts
+        fit += weight*cfg.objective_function(edata, Fi,
+                                             cfg.data_weights[key], **opts)
+        print(key, weight, fit)
+    fit = fit/weight_sum
+    return fit
 
 def main():
     cfg = proc_commandline()
     ensure_dir(os.path.join("./", output_dir))
-    # dump_data(cfg)
     plot_exp(cfg)
     do_plotting(cfg)
 

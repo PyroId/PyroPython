@@ -43,7 +43,7 @@ def read_data(fname=None,
         x = array(tmp[ind_col_name])
         y = array(tmp[dep_col_name])
     except KeyError as KeyErr:
-        print("Column named '%s' in file '%s' not found." % (KeyErr,fname))
+        print("Column named '%s' in file '%s' not found." % (KeyErr, fname))
         print("Column names:")
         print(tmp.columns)
         sys.exit(0)

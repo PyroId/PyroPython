@@ -9,17 +9,27 @@ import sys
 
 
 class Model:
-    def __init__(self):
-         self.exp_data = cfg.exp_data
-         self.params = cfg.variables
-         self.simulation = cfg.simulation
-         self.var_weights = cfg.var_weights
-         self.data_weights = cfg.data_weights
-         self.templates = cfg.templates
-         self.command = cfg.fds_command
-         self.tempdir = cfg.tempdir
-         self.objective_function = cfg.objective_function
-         self.objective_opts = cfg.objective_opts
+    def __init__(self,
+                 exp_data={},
+                 params={},
+                 simulation={},
+                 var_weights={},
+                 data_weights={},
+                 templates=[],
+                 command="",
+                 objective_function=None,
+                 tempdir=None,
+                 objective_opts={}):
+        self.exp_data = exp_data
+        self.params = params
+        self.simulation = simulation
+        self.var_weights = var_weights
+        self.data_weights = data_weights
+        self.templates = templates
+        self.command = command
+        self.tempdir = tempdir
+        self.objective_function = objective_function
+        self.objective_opts = objective_opts
 
     def initialize(self, **kwargs):
         for key in kwargs:
@@ -89,14 +99,15 @@ class Model:
         return [tuple(bounds) for name, bounds in self.params]
 
 
+def model_from_yaml(fname):
+
+    return
+
+
 def main():
     fname = sys.argv[1]
     cfg.read_config(fname)
-    model = Model(exp_data=cfg.exp_data,
-                  params=cfg.variables,
-                  simulation=cfg.simulation,
-                  fds_command=cfg.fds_command,
-                  template=open(cfg.fname, "r").read())
+    model = Model(cfg.case)
     x = [np.mean(x) for x in model.get_bounds()]
     fit = model.fitness(x)
     print(fit)
