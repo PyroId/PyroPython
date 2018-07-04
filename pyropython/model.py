@@ -31,13 +31,6 @@ class Model:
         self.objective_function = objective_function
         self.objective_opts = objective_opts
 
-    def initialize(self, **kwargs):
-        for key in kwargs:
-            if key in self.fields:
-                setattr(self, key, kwargs[key])
-            else:
-                raise Exception('invalid attribute: {0}'.format(key))
-
     def write_fds_file(self, outname, template, x):
         f = open(outname, "tw")
         template = Template(template)
@@ -97,11 +90,6 @@ class Model:
 
     def get_bounds(self):
         return [tuple(bounds) for name, bounds in self.params]
-
-
-def model_from_yaml(fname):
-
-    return
 
 
 def main():
