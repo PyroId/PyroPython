@@ -3,9 +3,9 @@ import tempfile
 import os
 import numpy as np
 import subprocess
-from . import config as cfg
+from pyropython import config as cfg
 from jinja2 import Template
-from .utils import read_data
+from pyropython.utils import read_data
 import sys
 
 

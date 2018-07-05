@@ -10,9 +10,9 @@ import yaml as y
 from numpy import float64, interp, ones
 import warnings
 from collections import namedtuple
-from .utils import read_data
-from .objective_functions import get_objective_function
-from .model import Model
+from pyropython.utils import read_data
+from pyropython.objective_functions import get_objective_function
+from pyropython.model import Model
 
 case = None
 run_opts = namedtuple('run_opts',

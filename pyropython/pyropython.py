@@ -7,8 +7,8 @@ from multiprocessing import freeze_support
 import numpy as np
 import time
 import argparse
-from .config import read_config
-from .utils import ensure_dir
+from pyropython.config import read_config
+from pyropython.utils import ensure_dir
 
 
 def optimize_model(case, run_opts):

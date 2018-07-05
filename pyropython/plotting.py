@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from .utils import read_data, ensure_dir
-from .config import read_plots
+from pyropython.utils import read_data, ensure_dir
+from pyropython.config import read_plots
 import argparse
 import os
 import sklearn.ensemble as skl
