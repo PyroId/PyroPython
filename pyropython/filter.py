@@ -57,7 +57,7 @@ def butterworth_filter(x, y, cutoff=0.0125, width=0.0125, **kwargs):
     """
     N, Wn = signal.buttord(cutoff, cutoff+width, 1, 60)
     b, a = signal.butter(N, Wn)
-    return signal.filtfilt(b, a, y, method="gus")  # zero phase filtering
+    return signal.filtfilt(b, a, y, method="gust")  # zero phase filtering
 
 
 def fir_filter(x, y, cutoff=0.0125, width=0.0125, **kwargs):
@@ -93,7 +93,7 @@ def moving_average_filter(x, y, width=11, window='hanning', **kwargs):
         w = np.ones(width, 'd')
     else:
         w = eval('np.'+window+'(width)')
-    y = np.convolve(w/w.sum(), y, mode='same')
+    y = signal.filtfilt(w/w.sum(), 1.0, y, method='gust')
     return y
 
 
@@ -102,7 +102,9 @@ def median_filter(x, y, width=10, **kwargs):
         kernel_size = width+1
     else:
         kernel_size = width
-    return signal.medfilt(y, kernel_size=kernel_size)
+    y_padded = np.pad(y, (kernel_size, ), 'edge')
+    ybar = signal.medfilt(y_padded, kernel_size=kernel_size)
+    return ybar[kernel_size:-kernel_size]
 
 
 def none_filter(x, y, **kwargs):
@@ -111,8 +113,6 @@ def none_filter(x, y, **kwargs):
 
 filter_types = {"gp": gp_filter,
                 "median": median_filter,
-                "butter": butterworth_filter,
-                "fir": fir_filter,
                 "ma": moving_average_filter,
                 "none": none_filter
                 }
