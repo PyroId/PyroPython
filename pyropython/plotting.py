@@ -6,7 +6,6 @@ from .utils import read_data, ensure_dir
 from .config import read_plots
 import argparse
 import os
-from .model import Model
 import sklearn.ensemble as skl
 simulation_dir = "Best/"
 output_dir = "Figs/"
@@ -89,9 +88,11 @@ def plot_feature_importance(cfg, result):
     print("Feature ranking:")
     n_features = len(X[0])
     for f in range(n_features):
-        print("{n}.  {var} : ({importance})".format(n=f + 1,
-                                                    var=names[indices[f]],
-                                                    importance=importances[indices[f]]))
+        msg = "{n}.  {var} : ({importance})"
+        print(msg.format(n=f + 1,
+                         var=names[indices[f]],
+                         importance=importances[indices[f]]))
+
     # Plot the feature importances of the forest
     fig, ax = plt.subplots()
     ax.set_title("Feature importances")
@@ -141,7 +142,7 @@ def do_plotting(cfg):
         print("%s/%s.pdf" % (output_dir, name))
         plt.savefig("%s/%s.pdf" % (output_dir, name), bbox_inches="tight")
         plt.close()
-        #print("Objective: %E" % check_fit(cfg))
+        #  print("Objective: %E" % check_fit(cfg))
 
 
 def check_fit(cfg):
@@ -161,6 +162,7 @@ def check_fit(cfg):
         print(key, weight, fit)
     fit = fit/weight_sum
     return fit
+
 
 def main():
     cfg = proc_commandline()

@@ -35,7 +35,8 @@ run_opts.optimizer_opts = {"base_estimator":       "ET",
                            "acq_func_kwargs":       {"xi": 0.01, "kappa": 1.96}
                            }
 
-def _check_required_fields(dict,req_fields):
+
+def _check_required_fields(dict, req_fields):
     """
     Tries to find fields in a dict.
     Input:
@@ -44,11 +45,12 @@ def _check_required_fields(dict,req_fields):
     Returns:
         not_found - list of fields not found.
     """
-    not_found=[]
+    not_found = []
     for field in req_fields:
         if field not in req_fields:
             not_found.append(field)
     return not_found
+
 
 def _set_data_line_defaults(line,
                             ind_col_name="Time",
@@ -221,13 +223,13 @@ def read_plots(input):
                             'exp_data',
                             'plots'
                             ])
-    simulation = cfg.get('simulation',{})
-    experiment = cfg.get('experiment',{})
+    simulation = cfg.get('simulation', {})
+    experiment = cfg.get('experiment', {})
     for key, line in simulation.items():
         line = _set_data_line_defaults(line)
     # set default values for data lines
     plot_data.simulation = simulation
-    plot_data.plots = cfg.get('plots',{})
+    plot_data.plots = cfg.get('plots', {})
     plot_data.exp_data = {}
     plot_data.raw_data = {}
     for key, line in experiment.items():
@@ -270,7 +272,8 @@ def read_config(fname):
     """
     case = read_model(fname)
     run_opts = proc_general_options(fname)
-    return case,run_opts
+    return case, run_opts
+
 
 def main():
     fname = sys.argv[1]

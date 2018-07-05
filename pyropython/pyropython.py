@@ -8,11 +8,10 @@ import numpy as np
 import time
 import argparse
 from .config import read_config
-import pickle as pkl
 from .utils import ensure_dir
 
 
-def optimize_model(case,run_opts):
+def optimize_model(case, run_opts):
     """
     Main optimization loop
     """
@@ -126,13 +125,14 @@ def optimize_model(case,run_opts):
 
         # Print info
         print()
-        print(
-            "   best objective from this iteration:  {obj:.3E}".format(obj=yi))
-        print(
-            "   best objective found thus far:       {obj:.3E}".format(obj=y_best))
+        msg = "   best objective from this iteration:  {obj:.3E}"
+        print(msg.format(obj=yi))
+        msg = "    best objective found thus far:       {obj:.3E}"
+        print(msg.format(obj=y_best))
         print("   best model:")
+        msg = "       {name} :"
         for n, (name, bounds) in enumerate(case.params):
-            print("       {name} :".format(name=name), x_best[n])
+            print(msg.format(name=name), x_best[n])
         print()
     log.close()
     print("\nOptimization finished. The best result found was:")
@@ -151,9 +151,12 @@ def optimize_model(case,run_opts):
         print("\nVariable importance scores:")
         n_features = len(X[0])
         for f in range(n_features):
-            print("{n}.  {var} : ({importance:.3f})".format(n=f + 1,
-                                                            var=names[indices[f]],
-                                                            importance=importances[indices[f]]))
+            print(("{n}.  {var} :" +
+                   " ({importance:.3f})").format(
+                n=f + 1,
+                var=names[indices[f]],
+                importance=importances[indices[f]])
+            )
     return
 
 
@@ -179,6 +182,7 @@ def proc_commandline():
     if args.num_initial:
         run_opts.num_initial = args.num_initials
     return case, run_opts
+
 
 def create_dirs():
     ensure_dir("Best/")
