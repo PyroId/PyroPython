@@ -20,7 +20,7 @@ f=open("output.csv","w")
 f.write("s,-\\n")
 f.write("Time,Y\\n")
 for n,x in enumerate(x):
-    f.write("%d,%.4f\\n" % (x,y[n]))
+    f.write("%d,%.10e\\n" % (x,y[n]))
 f.close()
 """
 
@@ -67,7 +67,7 @@ class TestClass:
                           )
 
     def test_fitness(self):
-        """ test model.fitness()
+        """ test model.fitness() by evaluating a synthetic case at chosen points
         """
         # test with the known right answer
         x = [500,  # mu1
@@ -77,24 +77,37 @@ class TestClass:
              np.log10(10000),  # logA1
              np.log10(30000)]  # logA2
 
-        res, pwd = self.case.fitness(x, return_directory=False)
+        res = self.case.fitness(x, return_directory=False)
+        print(res)
         assert np.abs(res) < tol
 
+
     def test_optimization(self):
+        """
+        Test minimizing model.fitness by scipy.minimize
+        """
         from functools import partial
         from scipy.optimize import minimize
 
         f = partial(self.case.fitness, return_directory=False)
 
         bounds = []
-        x0=[]
         for name, bound in self.case.params:
             bounds.append(bound)
-            x0.append(np.mean(bound))
 
-        res = minimize(f, x0, bounds=bounds)
+        # give starting point close to the optimum
+        x0 = [400,  # mu1
+              1000,  # mu2
+              180,  # s1
+              330,  # s2
+              np.log10(0.8*10000),  # logA1
+              np.log10(1.1*30000)]  # logA2
 
+        res = minimize(f, x0, bounds=bounds, method='slsqp')
+
+        print(res.fun)
         print(res.x)
+        # see if optimization ended in success
         assert res.success
 
     def tearDown(self):

@@ -14,6 +14,7 @@ from pyropython.utils import read_data
 from pyropython.objective_functions import get_objective_function
 from pyropython.model import Model
 
+
 case = None
 run_opts = namedtuple('run_opts',
                       ['num_jobs', 'max_iter', 'num_points',

@@ -27,14 +27,16 @@ def abs_dev(edata, sdata, weights, **kwargs):
 
 def standardized_moment(edata, sdata, weights, p=1):
     """
-    Measure based on standardized moment:
-        E[(sum_i ( w_i *(y_i-yhat_i) )^p]/std(w*y)^p
+    Measure based on p-norm/standrdized moment:
+        E[(sum_i ( w_i *abs(y_i-yhat_i) )^p]/std(w*y)^p
     where:
        edata  : y_i   , experimental data
        sdata  : yhat_i, simulation
        weights: w_i   , data weights
     All inputs are assumed to be one dimensional arrays
-    of equal lengths.
+    of equal lengths. Important cases:
+        p=1 gives the mean absolute deviation
+        p=2 gives the mean squared error
 
     Returns:
         the value of the standardized moment
