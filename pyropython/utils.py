@@ -1,6 +1,6 @@
 import os
 import sys
-from .filter import get_filter
+from pyropython.filter import get_filter
 from pandas import read_csv
 from numpy import array
 from numpy import gradient as np_gradient
@@ -43,10 +43,9 @@ def read_data(fname=None,
         x = array(tmp[ind_col_name])
         y = array(tmp[dep_col_name])
     except KeyError as KeyErr:
-        print("Column named '%s' in file '%s' not found." % (KeyErr, fname))
-        print("Column names:")
-        print(tmp.columns)
-        sys.exit(0)
+        msg = ("Column named '%s' in file '%s' not found." % (KeyErr, fname) +
+               "Column names: \\n %s" % str(tmp.columns))
+        raise KeyError(msg)
 
     y = filter(x, y, **filter_opts)
     if normalize:
