@@ -26,6 +26,8 @@ f.close()
 
 tol = 1e-3
 tempdir = os.path.join(os.getcwd(), "testDir/")
+
+
 class TestClass:
 
     def setUp(self):
@@ -37,17 +39,17 @@ class TestClass:
         y = (10000 * np.exp(-(x-500)**2 / (200**2)) +
              30000 * np.exp(-(x-1100)**2 / (300**2)))
 
-        #parameters and bounds
+        # parameters and bounds
         params = [("mu1", [0, 1000]),
                   ("mu2", [1000, 1800]),
-                  ("s1",[0,1000]),
-                  ("s2",[0,1000]),
+                  ("s1", [0, 1000]),
+                  ("s2", [0, 1000]),
                   ("logA1", [0, 6]),
                   ("logA2", [0, 6])]
 
-        experiment = {"Y": (x,y)}
+        experiment = {"Y": (x, y)}
         simulation = {"Y": {"fname": "output.csv",
-                             "dep_col_name": "Y"}}
+                            "dep_col_name": "Y"}}
         simulation["Y"] = _set_data_line_defaults(simulation["Y"])
         var_weights = {"Y": 1}
         data_weights = {"Y": np.ones_like(y)}
@@ -81,5 +83,5 @@ class TestClass:
 
     def tearDown(self):
         if os.path.exists(tempdir):
-                shutil.rmtree(tempdir,ignore_errors=True)
+                shutil.rmtree(tempdir, ignore_errors=True)
                 pass
