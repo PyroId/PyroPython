@@ -70,7 +70,7 @@ class Model:
             data[key] = T, F
         return data
 
-    def fitness(self, x):
+    def fitness(self, x, return_directory=True):
         fit = 0
         x = np.reshape(x, len(self.params))
         data, pwd = self.run_fds(x)
@@ -87,7 +87,10 @@ class Model:
                                                   self.data_weights[key],
                                                   **opts)
         fit = fit/weight_sum
-        return fit, pwd
+        if return_directory:
+            return fit, pwd
+        else:
+            return fit
 
     def get_bounds(self):
         return [tuple(bounds) for name, bounds in self.params]
