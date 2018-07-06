@@ -77,9 +77,25 @@ class TestClass:
              np.log10(10000),  # logA1
              np.log10(30000)]  # logA2
 
-        res, pwd = self.case.fitness(x)
-        shutil.rmtree(pwd)
+        res, pwd = self.case.fitness(x, return_directory=False)
         assert np.abs(res) < tol
+
+    def test_optimization(self):
+        from functools import partial
+        from scipy.optimize import minimize
+
+        f = partial(self.case.fitness, return_directory=False)
+
+        bounds = []
+        x0=[]
+        for name, bound in self.case.params:
+            bounds.append(bound)
+            x0.append(np.mean(bound))
+
+        res = minimize(f, x0, bounds=bounds)
+
+        print(res.x)
+        assert res.success
 
     def tearDown(self):
         if os.path.exists(tempdir):

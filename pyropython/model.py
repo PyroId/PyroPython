@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import tempfile
 import os
+import shutil
 import numpy as np
 import subprocess
 from pyropython import config as cfg
@@ -90,6 +91,7 @@ class Model:
         if return_directory:
             return fit, pwd
         else:
+            shutil.rmtree(pwd)
             return fit
 
     def get_bounds(self):
