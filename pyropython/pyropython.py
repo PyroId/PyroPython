@@ -9,7 +9,7 @@ import time
 import argparse
 from pyropython.config import read_config
 from pyropython.utils import ensure_dir
-
+from pyropython.initial_design import make_initial_design
 
 def optimize_model(case, run_opts):
     """
@@ -72,6 +72,9 @@ def optimize_model(case, run_opts):
                    Using random sampling")
         run_opts.initial_design = "rand"
 
+    x = make_initial_design(name=run_opts.initial_design,
+                            num_points=run_opts.num_initial,
+                            bounds=case.get_bounds())
     if run_opts.initial_design == "lhs":
         ndim = len(case.get_bounds())
         xhat = lhs(run_opts.num_initial, ndim, "maximin").T
