@@ -18,7 +18,7 @@ def test_standardized_moment():
         1. Mean Absolute Deviation
         2. 1
         3. related to skewness
-        4. related to kurtosis 
+        4. related to kurtosis
     """
     of = get_objective_function("standardized_moment")
 

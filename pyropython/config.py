@@ -71,7 +71,7 @@ def _set_data_line_defaults(line,
     """
     not_found = _check_required_fields(line, ["dep_col_name", "fname"])
     if not_found:
-        raise ValueError("required field(s) %s not found." % str(not_found))
+        raise KeyError("required field(s) %s not found." % str(not_found))
     line.setdefault("ind_col_name", ind_col_name)
     line.setdefault("normalize", normalize)
     line.setdefault("conversion_factor", conversion_factor)
@@ -100,7 +100,8 @@ def read_model(input):
                                              "variables",
                                              "templates"])
     if not_found:
-        sys.exit("required field(s) %s not found in config." % str(not_found))
+        raise KeyError("required field(s) %s not found in config." %
+                       str(not_found))
 
     """
      yaml is sometimes unable to correctly convert str to float.
@@ -112,19 +113,20 @@ def read_model(input):
         try:
             variables[n] = (name, float64(bounds))
         except ValueError:
-            sys.exit("Bounds for %s need to benumeric (for now)." % name)
+            raise TypeError("Bounds for %s need to benumeric (for now)." %
+                            name)
     simulation = cfg['simulation']
     experiment = cfg['experiment']
 
     for key in cfg['simulation']:
         if key not in cfg['experiment']:
-            sys.exit("No experimental data for variable %s" % key)
+            raise KeyError("No experimental data for variable %s" % key)
     for key in cfg['experiment']:
         if key not in cfg['simulation']:
-            sys.exit("No simulation data for variable %s" % key)
+            raise KeyError("No simulation data for variable %s" % key)
 
     if len(cfg['templates']) < 1:
-        sys.exit("Templates list cannot be empty.")
+        raise ValueError("Templates list cannot be empty.")
     templates = []
     for fname in cfg['templates']:
         templates.append((fname, open(fname, 'r').read()))
@@ -158,12 +160,14 @@ def read_model(input):
     """
     if len(var_weights) > 0:
         if set(var_weights) != set(simulation):
-            print(
+            warnings.warn(
                 "If weights are defined for one or more variables they " +
                 "should  be defined for all variables in 'experiment'" +
-                " and 'simulation':")
-            print(set(var_weights).symmetric_difference(set(simulation)))
-            sys.exit(0)
+                " and 'simulation'. Weights will be set to unity. " +
+                " Missing: \\n %s " %
+                str(set(var_weights).symmetric_difference(set(simulation))))
+            for key in experiment:
+                        var_weights[key] = 1.0
     else:
         for key in experiment:
             var_weights[key] = 1.0

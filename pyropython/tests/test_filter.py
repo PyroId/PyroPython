@@ -22,4 +22,4 @@ def test_filters():
     # see if the filtered data is close to original. The tolerances are made up
     # almost certainly we could use tighter tolerances
     for name in result:
-        assert np.allclose(result[name], y, atol=10)
+        assert np.allclose(result[name], y, atol=20)

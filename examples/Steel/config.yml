@@ -1,0 +1,92 @@
+Project: EU-FibreShip
+Author:  Timo Korhonen
+VTT Technical Research Centre of Finland 2018
+
+* Plain 3.2mm thick steel plate in cone calorimeter.
+* Model v4:
+  - 3.2mm steel, front side emissivity is changing according to temperature
+    How? Make two steel MATL and make steel_1 => steel_2 reaction with some
+    REFERENCE_TEMPERATURE
+    PYROLYSIS_RANGE (default 80 C or K)
+    
+* Model
+   3.2 mm steel, fron emissivity with two steels (eps1 => eps2 reaction)
+   2.0 mm KaowoolAluminumAirGap: T^3 factor = 1/3 Kaowool64 case (aluminum emissivity)
+          (linear part is mainly due to air conductivity, t3 part is radiation part)
+  43.0 mm is Kaowool, own fit:
+    k(T, kelvin) =  a + b*T + c*T3
+    a = 0.01, b= 8.00E-05, c= 1.20E-10
+    (=> k(20C)=0.036, air k(20C)=0.0251)
+   Kaowool_cp = 1.08, Kaowool_rho=80
+
+ Teräs, emissiivisyys: eps1=0.51, eps2=0.60, T_ref=375C,
+                       Rate_ref=0.000595, heat_rate=5.0 (ei varioitu)
+ Kaowool: cp=1.08, rho=80, k0C=0.0467, k=150C=0.049 k300C=0.0666, K500C=0.01267,
+
+=====================
+PyroPython input file
+=====================
+========================================================================================
+#start_config
+#
+# number of parallel jobs (optional, default 1)
+num_jobs: 36
+# maximum number of iterations  (optional, default 50)
+max_iter: 10
+# How many points explored per iteration  (optional, default 1)
+num_points: 36  
+# Number of points in initial design  (optional, default 1)
+num_initial: 36
+#location of fds executable (absolute path).  (required)
+fds_command:  /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64
+#
+# Variables to be identified (required) 
+# Format is  VARNAME: [min max]
+# VARNAME is used to identify the variable in the fds input.
+# The *min* and *max* give the bounds for the variable
+# ref_rate 0.000595, ref_temp 375, eps1=0.51, eps2=0.6
+# kao_cp=1.08, kao_rho=80
+variables:         
+          STEEL1_EPSILON: [ 0.45, 0.55]  
+          STEEL2_EPSILON: [ 0.55, 0.75]  
+          REF_TEMP:    [300,400]
+          REF_RATE:    [0.0004,0.0008]
+#
+# simulation - simulation outputfiles
+# entries in format:
+#   Var_name: output_file, col name, conversion factor
+# Var_name is used to match the simulation output and experimental data
+# output_file gives the field where this output is located int
+# col name gives the column name in output file
+# conversion factor  factor for converting from e.g. g to kg (i.e, c in  y=c*x)
+# experiment - experimental data in same format
+#   Var_name: data_file, col name, conversion factor
+simulation:
+    TTC1: {fname: 'cone_steel_v5_devc.csv',ind_col_name: 'T_b45mmTC1',conversion_factor: 1.0}
+    TTC2: {fname: 'cone_steel_v5_devc.csv',ind_col_name: 'T_b13mmTC2',conversion_factor: 1.0}
+experiment:
+    TTC1: ['SteelReference.csv',ind_col_name: 'T_b45mmTC1',conversion_factor: 1.0}
+    TTC2: ['SteelReference.csv',ind_col_name: 'T_b45mmTC1',conversion_factor: 1.0}
+#
+# The following fields are optional:
+# Options for objective function
+obejctive:
+    type: 'RMSE' # TODO: add more objectivefunctions
+    weights: {'TTC1': 1.0, 'TTC2': 1.0}
+#
+# Information for plot_comp.py. Note that the results of the best run need to be in the Best/
+plotting:
+    TTC1: {ylabel: "TC1 ($^\\circ$C)", xlabel: "Time (s)"}
+    TTC2: {ylabel: "TC2 ($^\\circ$C)", xlabel: "Time (s)"}
+#
+# These are options for the optimizer class in scikit-optimize you can
+# safely ignore these or [https://scikit-optimize.github.io/#skopt.Optimizer]
+optimizer:
+   base_estimator: 'ET'
+   acq_func: 'LCB'
+   acq_optimizer: 'auto'
+   acq_optimizer_kwargs: {n_points: 10000, n_restarts_optimizer": 5,n_jobs: 1}
+   acq_func_kwargs: {xi: 0.05, kappa: 0.20}
+#
+#end_config
+========================================================================================

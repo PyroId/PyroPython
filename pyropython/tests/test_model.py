@@ -4,7 +4,7 @@ import shutil
 import numpy as np
 from pyropython.config import _set_data_line_defaults
 from pyropython.objective_functions import get_objective_function
-"""This module tetsts the pyropython.model moduleself.
+"""This module tetsts the pyropython.model.Mode class
 
    For testing purposes we don't use FDS since this would require knowledge
    of the FDS installation. Instead, since this is a Python program, we use
@@ -25,12 +25,12 @@ f.close()
 """
 
 tol = 1e-3
-tempdir = os.path.join(os.getcwd(), "testDir/")
+tempdir = os.path.join(os.getcwd(), "testDir")
 
 
 class TestClass:
 
-    def setUp(self):
+    def setup_method(self):
         # create working directory
         if not os.path.exists(tempdir):
             os.makedirs(tempdir)
@@ -78,7 +78,7 @@ class TestClass:
              np.log10(30000)]  # logA2
 
         res = self.case.fitness(x, return_directory=False)
-        print(res)
+
         assert np.abs(res) < tol
 
 
@@ -102,15 +102,16 @@ class TestClass:
               330,  # s2
               np.log10(0.8*10000),  # logA1
               np.log10(1.1*30000)]  # logA2
+        # only perform one iteration
+        res = minimize(f, x0,
+                       options={"disp": True},
+                       bounds=bounds,
+                       method='slsqp')
 
-        res = minimize(f, x0, bounds=bounds, method='slsqp')
-
-        print(res.fun)
-        print(res.x)
         # see if optimization ended in success
         assert res.success
 
-    def tearDown(self):
+    def teardown_method(self):
         if os.path.exists(tempdir):
                 shutil.rmtree(tempdir, ignore_errors=True)
                 pass
