@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from skopt import Optimizer
+
 import sklearn.ensemble as skl
-from distutils.dir_util import copy_tree
-from shutil import rmtree
+
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import freeze_support
 import numpy as np
@@ -11,141 +10,43 @@ import argparse
 from pyropython.config import read_config
 from pyropython.utils import ensure_dir
 from pyropython.initial_design import make_initial_design
+from pyropython.optimizer import get_optimizer
 
 def optimize_model(case, run_opts):
     """
     Main optimization loop
     """
+
     # these can perhaps be changed later to use MPI
     # The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
     # The Model class and associated functions are not thread safe.
     ex = ProcessPoolExecutor(run_opts.num_jobs)
-    optimizer = Optimizer(dimensions=case.get_bounds(),
-                          **run_opts.optimizer_opts)
 
-    # Convenience functions
-    def evaluate(x):
-        """
-        This function evaluates the model finess at points x
-        """
-        print("Evaluating %d points." % len(x), end='', flush=True)
-        t0 = time.perf_counter()
-        out = list(ex.map(case.fitness, x))  # evaluate points in parallel
-        t1 = time.perf_counter()
-        y, pwd = zip(*out)
-        print(" Complete in %.3f seconds" % (t1-t0))
-        return y, pwd
+    optimizer = get_optimizer(run_opts.optimizer_name)
 
-    def ask(num_points):
-        """
-        This function asks the optimizer for more points
-        """
-        print("Asking for points.", end='', flush=True)
-        t0 = time.perf_counter()
-        # x is a list of n_points points
-        x = optimizer.ask(n_points=num_points)
-        t1 = time.perf_counter()
-        print(" Complete in %.3f seconds" % (t1-t0))
-        return x
+    x_best, f_best, Xi,Fi  = optimizer(case,run_opts,ex)
 
-    def tell(x, y):
-        """
-        This function tells the optimizer some new points.
-        """
-        print("Teaching points.", end='', flush=True)
-        t0 = time.perf_counter()
-        optimizer.tell(x, y)
-        t1 = time.perf_counter()
-        print(" Complete in %.3f seconds" % (t1-t0))
 
-    log = open("log.csv", "w", buffering=1)
-    header = ",".join(["Iteration"] +
-                      [name for name, bounds in case.params] +
-                      ["Objective", "Best Objective"])
-    log.write(header+"\n")
-    print("picking initial points")
-    # initial design (random) or lhs
-    if run_opts.initial_design == "lhs":
-        try:
-            from pyDOE import lhs
-        except ImportError:
-            print("Latin hypercube smapling requires pyDOE.\
-                   Using random sampling")
-        run_opts.initial_design = "rand"
-
-    x = make_initial_design(name=run_opts.initial_design,
-                            num_points=run_opts.num_initial,
-                            bounds=case.get_bounds())
-
-    y, pwd = evaluate(x)
-    ind = np.argmin(y)
-    yi = y[ind]
-    Xi = x[ind]
-    line = ["%d" % 0] + ["%.3f" % f for f in Xi] + ["%3f" % yi, "%3f" % yi]
-    log.write(",".join(line)+"\n")
-    # Save the  output files from the best run
-    copy_tree(pwd[ind], "Best")
-    y_best = yi
-    x_best = Xi
-    # Explicitly clean up temp direcotries
-    for p in pwd:
-        rmtree(p)
-    # Main iteration loop
-    for i in range(run_opts.max_iter):
-        print("Iteration {i}/{N}:".format(i=i, N=run_opts.max_iter))
-        # teach points
-        tell(x, y)
-        x = ask(run_opts.num_points)
-        y, pwd = evaluate(x)
-        ind = np.argmin(y)
-        yi = y[ind]
-        Xi = x[ind]
-
-        # Save the  output files from the best run
-        if y_best > yi:
-            copy_tree(pwd[ind], "Best")
-            y_best = yi
-            x_best = Xi
-
-        # Explicitly clean up temp direcotries
-        for p in pwd:
-            rmtree(p)
-
-        # Log iteration
-        line = ["%d" % (i+1)] + ["%.3f" % f for f in Xi] + \
-               ["%3f" % yi, "%3f" % y_best]
-        log.write(",".join(line)+"\n")
-
-        # Print info
-        print()
-        msg = "   best objective from this iteration:  {obj:.3E}"
-        print(msg.format(obj=yi))
-        msg = "    best objective found thus far:       {obj:.3E}"
-        print(msg.format(obj=y_best))
-        print("   best model:")
-        msg = "       {name} :"
-        for n, (name, bounds) in enumerate(case.params):
-            print(msg.format(name=name), x_best[n])
-        print()
-    log.close()
+    X = np.vstack(Xi)
+    Y = np.hstack(Fi).T
+    print(X,Y)
     print("\nOptimization finished. The best result found was:")
     for n, (name, bounds) in enumerate(case.params):
         print("{name} :".format(name=name), x_best[n])
 
-    # For tree based metamodels, also output variable importance
-    forest = optimizer.models[-1]
-    if(isinstance(forest, skl.RandomForestRegressor) or
-       isinstance(forest, skl.ExtraTreesRegressor)):
-        X = optimizer.Xi
-        importances = forest.feature_importances_
-        names = [name for name, bounds in case.params]
-        indices = np.argsort(importances)[::-1]
-        # Print the feature ranking
-        print("\nVariable importance scores:")
-        n_features = len(X[0])
-        for f in range(n_features):
-            print(("{n}.  {var} :" +
-                   " ({importance:.3f})").format(
+    # Fit a tree model to get variable importance
+    forest = skl.ExtraTreesRegressor()
+    forest.fit(X, Y)
+
+    importances = forest.feature_importances_
+    names = [name for name, bounds in case.params]
+    indices = np.argsort(importances)[::-1]
+    # Print the feature ranking
+    print("\nVariable importance scores:")
+    n_features = len(x_best)
+    for f in range(n_features):
+        print(("{n}.  {var} :" +
+               " ({importance:.3f})").format(
                 n=f + 1,
                 var=names[indices[f]],
                 importance=importances[indices[f]])

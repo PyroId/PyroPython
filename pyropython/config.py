@@ -265,13 +265,14 @@ def proc_general_options(input):
     run_opts = namedtuple('run_opts',
                           ['num_jobs', 'max_iter', 'num_points',
                            'num_initial', 'initial_design',
-                           'optimizer_opts'])
+                           'optimizer_opts','optimizer_name'])
     run_opts.max_iter = cfg.get("max_iter", 1)
     run_opts.num_jobs = cfg.get("num_jobs", 1)
     run_opts.num_points = cfg.get("num_points", 1)
     run_opts.num_initial = cfg.get("num_initial", 1)
     run_opts.initial_design = cfg.get("initial_design", "rand")
     run_opts.optimizer_opts = cfg.get("optimizer", {})
+    run_opts.optimizer_name = cfg.get("optimizer_name", "skopt")
     return run_opts
 
 

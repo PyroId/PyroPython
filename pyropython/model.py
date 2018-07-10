@@ -7,8 +7,8 @@ import subprocess
 from pyropython import config as cfg
 from jinja2 import Template
 from pyropython.utils import read_data
+from queue import Queue
 import sys
-
 
 class Model:
     def __init__(self,
@@ -21,7 +21,8 @@ class Model:
                  command="",
                  objective_function=None,
                  tempdir=None,
-                 objective_opts={}):
+                 objective_opts={},
+                 files = Queue()):
         self.exp_data = exp_data
         self.params = params
         self.simulation = simulation
@@ -71,7 +72,7 @@ class Model:
             data[key] = T, F
         return data
 
-    def fitness(self, x, return_directory=True):
+    def fitness(self, x, files=None):
         fit = 0
         x = np.reshape(x, len(self.params))
         data, pwd = self.run_fds(x)
@@ -88,11 +89,11 @@ class Model:
                                                   self.data_weights[key],
                                                   **opts)
         fit = fit/weight_sum
-        if return_directory:
-            return fit, pwd
+        if files:
+            files.put((fit, x, pwd))
         else:
             shutil.rmtree(pwd)
-            return fit
+        return fit
 
     def get_bounds(self):
         return [tuple(bounds) for name, bounds in self.params]

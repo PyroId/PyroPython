@@ -3,7 +3,6 @@ from pyropython.utils import read_data
 from pyropython.config import _set_data_line_defaults
 import numpy as np
 import os
-import tempfile
 
 tempdir = os.path.join(os.getcwd(), "testDir")
 

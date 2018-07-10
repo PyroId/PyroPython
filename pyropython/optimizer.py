@@ -3,7 +3,10 @@ from functools import partial
 import sklearn.ensemble as skl
 from distutils.dir_util import copy_tree
 from shutil import rmtree
-from initial_design import make_initial_design
+from pyropython.initial_design import make_initial_design
+from multiprocessing import Manager
+from shutil import rmtree,copytree
+from traceback import print_exception
 
 class Logger:
     """
@@ -12,15 +15,20 @@ class Logger:
 
     def __init__(self,
                  params=None,
-                 logfile="log.csv"):
+                 logfile="log.csv",
+                 files = None,
+                 best_dir="Best/"):
         self.x_best = None
         self.f_best = None
         self.xi = None
         self.fi = None
         self.iter = 0
         self.logfile = open(logfile, "w")
-        self.points = []
+        self.Xi = []
+        self.Fi = []
         self.params = params
+        self.files = files
+        self.best_dir = best_dir
 
         # write header to logfile before  first iteration
         header = ",".join(["Iteration"] +
@@ -31,8 +39,11 @@ class Logger:
     def __enter__(self):
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, tb):
         self.logfile.close()
+        if exc_type is not None:
+            print_exception(exc_type, exc_value, tb)
+
 
     def __call__(self, x, f, **args):
         """
@@ -41,12 +52,13 @@ class Logger:
         self.update(x, f)
         self.print_iteration()
         self.log_iteration()
+        self.process_files()
 
     def update(self, x, f):
-        self.points.append((x, f))
         f_ = list(f)
         x_ = list(x)
-
+        self.Xi.append(x_)
+        self.Fi.append(f_)
         ind = np.argmin(f_)
         self.fi = f_[ind]
         self.xi = x_[ind]
@@ -64,11 +76,12 @@ class Logger:
         """ prints the solution from current iteration """
         # Print info
         msg = """
+            Iteration: {it:d}
                 best objective from this iteration:  {cur:.3E}
                 best objective found thus far:       {bst:.3E}
                 best model:
-          """
-        print(msg.format(cur=self.fi, bst=self.f_best))
+              """
+        print(msg.format(it=self.iter,cur=self.fi, bst=self.f_best))
         msg = "       {name} :"
         for n, (name, bounds) in enumerate(self.params):
             print(msg.format(name=name), self.x_best[n])
@@ -81,6 +94,16 @@ class Logger:
         self.logfile.write(",".join(line)+"\n")
         pass
 
+    def process_files(self):
+        if not self.files:
+            return
+        while not self.files.empty():
+            fi, xi, pwd = self.files.get()
+            if fi <= self.f_best:
+                rmtree(self.best_dir)
+                copytree(pwd,self.best_dir)
+                rmtree(pwd)
+
 
 def skopt(case, runopts, executor):
     """ optimize case using scikit-optimize
@@ -88,21 +111,22 @@ def skopt(case, runopts, executor):
     from skopt import Optimizer
     optimizer = Optimizer(dimensions=case.get_bounds(),
                           **runopts.optimizer_opts)
-
+    files = Manager().Queue()
+    fun = partial(case.fitness, files=files)
     x = make_initial_design(name=runopts.initial_design,
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
-    N_iter = 1
-    with  Logger(params=case.params) as log:
-        while N_iter<runopts.maxiter:
+    N_iter = 0
+    with Logger(params=case.params, files=files) as log:
+        while N_iter<runopts.max_iter:
             # evaluate points (in parallel)
-            out = list(executor.map(case.fitness, x))
-            y, pwd = zip(*out)
+            y = list(executor.map(fun, x))
             log(x, y)
             optimizer.tell(x ,y)
-            x = optimizer.ask(runopts.num_points)
+            if N_iter < runopts.max_iter:
+                x = optimizer.ask(runopts.num_points)
             N_iter += 1
-        return log.x_best, log.f_best, log.points
+        return log.x_best, log.f_best, log.Xi,log.Fi
 
 def penalty_function(x,bounds=[]):
     """
@@ -150,7 +174,6 @@ def multistart(case, runopts, executor):
 
     log = Logger(params=case.params)
 
-    return log.x_best, log.f_best, log.points
 
 
 optimizers = {"skopt": skopt,

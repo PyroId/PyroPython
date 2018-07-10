@@ -1,5 +1,4 @@
 import os
-import sys
 from pyropython.filter import get_filter
 from pandas import read_csv
 from numpy import array

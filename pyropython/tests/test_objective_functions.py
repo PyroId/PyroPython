@@ -3,7 +3,7 @@ from pyropython.objective_functions import (
     get_objective_function,
     objective_functions
     )
-from scipy.stats import skew,kurtosis
+
 tol = 1e-2
 
 
@@ -30,8 +30,6 @@ def test_standardized_moment():
 
     mom1 = of(y, x, w, p=1)
     mom2 = of(y, x, w, p=2)
-    mom3 = of(y, x, w, p=3)
-    mom4 = of(y, x, w, p=4)
 
 
     assert np.abs(mom1 -  np.sqrt(2/np.pi)) < tol
