@@ -12,7 +12,6 @@ import warnings
 from collections import namedtuple
 from pyropython.utils import read_data
 from pyropython.objective_functions import get_objective_function
-from pyropython.model import Model
 
 
 case = None
@@ -199,7 +198,12 @@ def read_model(input):
     if "fds_command" not in cfg:
         warnings.warn("fds_command not defined. Using 'fds'")
     fds_command = cfg.get("fds_command", "fds")
+    # check if fds_command is found and executable
+    if not os.path.isfile(fds_command) and not os.access(fds_command, os.X_OK):
+        raise ValueError(("The executable %s can not found or not executable" %
+                          fds_command))
     tempdir = os.path.join(os.getcwd(), "Work/")
+    from pyropython.model import Model
     return Model(exp_data=exp_data,
                  params=variables,
                  simulation=simulation,
