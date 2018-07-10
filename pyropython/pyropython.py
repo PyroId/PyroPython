@@ -29,7 +29,7 @@ def optimize_model(case, run_opts):
 
     X = np.vstack(Xi)
     Y = np.hstack(Fi).T
-    print(X,Y)
+    
     print("\nOptimization finished. The best result found was:")
     for n, (name, bounds) in enumerate(case.params):
         print("{name} :".format(name=name), x_best[n])
