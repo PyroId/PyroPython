@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from skopt import Optimizer
 import sklearn.ensemble as skl
 from distutils.dir_util import copy_tree
@@ -75,17 +76,6 @@ def optimize_model(case, run_opts):
     x = make_initial_design(name=run_opts.initial_design,
                             num_points=run_opts.num_initial,
                             bounds=case.get_bounds())
-    if run_opts.initial_design == "lhs":
-        ndim = len(case.get_bounds())
-        xhat = lhs(run_opts.num_initial, ndim, "maximin").T
-        xhat = [list(point) for point in xhat]
-        x = xhat
-        for i, point in enumerate(x):
-            for n, (xmin, xmax) in enumerate(case.get_bounds()):
-                # Note that point is reference to element of x
-                x[i][n] = xmin+xhat[i][n]*(xmax-xmin)
-    else:
-        x = ask(run_opts.num_initial)
 
     y, pwd = evaluate(x)
     ind = np.argmin(y)
