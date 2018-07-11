@@ -101,7 +101,7 @@ class Model:
         optimization algorithms
         """
         res = self.fitness(x, **kwargs)
-        for n, (minval, maxval) in self.get_bounds():
+        for n, (minval, maxval) in enumerate(self.get_bounds()):
             res += c * min(0, x[n]-minval)**2 + c * max(0, x[n]-maxval)**2
         return res
 
