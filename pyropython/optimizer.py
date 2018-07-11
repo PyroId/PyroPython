@@ -162,13 +162,12 @@ def multistart(case, runopts, executor):
 
     N_iter = 0
     files = Manager().Queue()
-    fun = partial(case.fitness, files=files)
+    fun = partial(case.penalized_fitness, files=files)
     with Logger(params=case.params, files=files) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             task = partial(minimize, fun,
-                           method="powell",
-                           bounds=case.get_bounds())
+                           method="powell")
             y = list(executor.map(task, x))
             log(x, y)
             if N_iter < runopts.max_iter:
