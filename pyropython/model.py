@@ -95,6 +95,16 @@ class Model:
             shutil.rmtree(pwd)
         return fit
 
+    def penalized_fitness(self,x,c=100,**kwargs):
+        """
+        Penalty function version of fitness(), for use with unconstrained
+        optimization algorithms
+        """
+        res = self.fitness(x, **kwargs)
+        for n, (minval, maxval) in self.get_bounds():
+            res += c * min(0, x[n]-minval)**2 + c * max(0, x[n]-maxval)**2
+        return res
+
     def get_bounds(self):
         return [tuple(bounds) for name, bounds in self.params]
 

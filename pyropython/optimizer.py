@@ -128,16 +128,6 @@ def skopt(case, runopts, executor):
             N_iter += 1
         return log.x_best, log.f_best, log.Xi,log.Fi
 
-def penalty_function(x,bounds=[]):
-    """
-    Implement optimization constraints by penalty function method.
-    """
-    res = 0
-    for n, (minval, maxval) in enumerate(bounds):
-        res += 100 * min(0, x[n]-minval)**2 + 100 * max(0, x[n]-maxval)**2
-
-    return res
-
 
 def basin_hopping(case, runopts, **args):
     """ optimize case using scipy optimize basin hopping algorithm
@@ -163,16 +153,30 @@ def basin_hopping(case, runopts, **args):
 
 
 def multistart(case, runopts, executor):
-    """ optimize case using multiple random starts
+    """ optimize case using multiple random starts and scipy.minimize
     """
+    from scipy.optimize import minimize
     x = make_initial_design(name=runopts.initial_design,
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
 
-    def fun(x):
-        return case.fitness(x) + penalty_function(x,case.get_bounds())
-
-    log = Logger(params=case.params)
+    N_iter = 0
+    files = Manager().Queue()
+    fun = partial(case.fitness, files=files)
+    with Logger(params=case.params, files=files) as log:
+        while N_iter < runopts.max_iter:
+            # evaluate points (in parallel)
+            task = partial(minimize, fun,
+                           method="powell",
+                           bounds=case.get_bounds())
+            y = list(executor.map(task, x))
+            log(x, y)
+            if N_iter < runopts.max_iter:
+                x = make_initial_design(name="rand",
+                                        num_points=runopts.num_points,
+                                        bounds=case.get_bounds())
+            N_iter += 1
+        return log.x_best, log.f_best, log.Xi, log.Fi
 
 
 

@@ -66,6 +66,7 @@ plots:
     cmpMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
     cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
 templates: ["birch_tga_1step_2.fds","birch_tga_1step_20.fds","birch_tga_1step_5.fds","birch_tga_1step_10.fds"]
+optimizer_name: "multistart"
 optimizer:
          base_estimator:        'ET'
          acq_func:              'EI'
