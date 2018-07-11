@@ -171,7 +171,6 @@ def multistart(case, runopts, executor):
 
 
 optimizers = {"skopt": skopt,
-              "basin_hopping": basin_hopping,
               "multistart": multistart}
 
 
