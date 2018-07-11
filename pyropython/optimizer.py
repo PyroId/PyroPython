@@ -160,8 +160,11 @@ def multistart(case, runopts, executor):
                            options={'disp': True,
                                     'ftol': 0.01,
                                     'maxfev': 100})
+            print("Minimizing {num:d} starting points.".format(num=len(x)))
             y = list(executor.map(task, x))
             log()
+            msg = "Used {N:d} function evaluations. "
+            print(msg.format(N=len(log.Fi[-1])))
             if N_iter < runopts.max_iter:
                 x = make_initial_design(name="rand",
                                         num_points=runopts.num_points,
