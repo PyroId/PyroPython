@@ -100,9 +100,12 @@ class Model:
         Penalty function version of fitness(), for use with unconstrained
         optimization algorithms
         """
-        res = self.fitness(x, **kwargs)
+        res = 0
         for n, (minval, maxval) in enumerate(self.get_bounds()):
             res += c * min(0, x[n]-minval)**2 + c * max(0, x[n]-maxval)**2
+        # Don't evaluate fitness for very wrong inputs
+        if res<=1:
+            res += self.fitness(x, **kwargs)
         return res
 
     def get_bounds(self):

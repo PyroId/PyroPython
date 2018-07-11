@@ -11,6 +11,8 @@ from traceback import print_exception
 class Logger:
     """
     Class for recording optimization algorithm progress.
+
+    This class is supposed to consume the queue created by model.fitness()
     """
 
     def __init__(self,
@@ -41,36 +43,52 @@ class Logger:
 
     def __exit__(self, exc_type, exc_value, tb):
         self.logfile.close()
+        self.consume_queue()
         if exc_type is not None:
             print_exception(exc_type, exc_value, tb)
 
 
-    def __call__(self, x, f, **args):
+    def __call__(self, **args):
         """
         This function call signature matches most scipy.optimize callbacks
         """
-        self.update(x, f)
+        self.consume_queue()
         self.print_iteration()
         self.log_iteration()
-        self.process_files()
 
-    def update(self, x, f):
-        f_ = list(f)
-        x_ = list(x)
-        self.Xi.append(x_)
-        self.Fi.append(f_)
-        ind = np.argmin(f_)
-        self.fi = f_[ind]
-        self.xi = x_[ind]
+    def consume_queue(self,queue=None):
+        if not queue:
+            queue = self.files
+        f_ = []
+        x_ = []
+        while not queue.empty():
+            fi, xi, pwd = self.files.get()
+            f_.append(fi)
+            x_.append(xi)
+            # record best valeu seen
+            if self.f_best:
+                if self.f_best > fi:
+                    self.f_best = fi
+                    self.x_best = xi
+            else:
+                self.f_best = fi
+                self.x_best = xi
 
-        if self.f_best:
-            if self.f_best > self.fi:
-                self.f_best = self.fi
-                self.x_best = self.xi
-        else:
-            self.f_best = self.fi
-            self.x_best = self.xi
+            # save output of the best run
+            if fi <= self.f_best:
+                rmtree(self.best_dir)
+                copytree(pwd,self.best_dir)
+            # delete files when done
+            rmtree(pwd)
+
+        # record the best form this iteration
         self.iter += 1
+        if len(f_) > 0:
+            ind = np.argmin(f_)
+            self.fi = f_[ind]
+            self.xi = x_[ind]
+            self.Xi.append(x_)
+            self.Fi.append(f_)
 
     def print_iteration(self):
         """ prints the solution from current iteration """
@@ -94,15 +112,6 @@ class Logger:
         self.logfile.write(",".join(line)+"\n")
         pass
 
-    def process_files(self):
-        if not self.files:
-            return
-        while not self.files.empty():
-            fi, xi, pwd = self.files.get()
-            if fi <= self.f_best:
-                rmtree(self.best_dir)
-                copytree(pwd,self.best_dir)
-                rmtree(pwd)
 
 
 def skopt(case, runopts, executor):
@@ -121,36 +130,15 @@ def skopt(case, runopts, executor):
         while N_iter<runopts.max_iter:
             # evaluate points (in parallel)
             y = list(executor.map(fun, x))
-            log(x, y)
+            log()
             optimizer.tell(x ,y)
             if N_iter < runopts.max_iter:
                 x = optimizer.ask(runopts.num_points)
             N_iter += 1
         return log.x_best, log.f_best, log.Xi,log.Fi
 
-
-def basin_hopping(case, runopts, **args):
-    """ optimize case using scipy optimize basin hopping algorithm
-    """
-    from scipy.optimize import basinhopping
-
-    x = make_initial_design(name=runopts.initial_design,
-                            num_points=1,
-                            bounds=case.get_bounds())
-
-    # Augument case.fitness with penalty function, don't return directory
-    def fun(x):
-        return (case.fitness(x, return_directory=False) +
-                penalty_function(x, case.get_bounds()))
-
-    with Logger(params=case.params) as log:
-
-        opt = basinhopping(fun, x,
-                           niter=runopts.max_iter,
-                           callback=log)
-
-        return log.x_best, log.f_best, log.points
-
+def callback(xk):
+    print(xk)
 
 def multistart(case, runopts, executor):
     """ optimize case using multiple random starts and scipy.minimize
@@ -167,16 +155,19 @@ def multistart(case, runopts, executor):
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             task = partial(minimize, fun,
-                           method="powell")
+                           method="powell",
+                           callback=callback,
+                           options={'disp': True,
+                                    'ftol': 0.01,
+                                    'maxfev': 100})
             y = list(executor.map(task, x))
-            log(x, y)
+            log()
             if N_iter < runopts.max_iter:
                 x = make_initial_design(name="rand",
                                         num_points=runopts.num_points,
                                         bounds=case.get_bounds())
             N_iter += 1
         return log.x_best, log.f_best, log.Xi, log.Fi
-
 
 
 optimizers = {"skopt": skopt,
