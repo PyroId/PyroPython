@@ -7,10 +7,19 @@ import subprocess
 from pyropython import config as cfg
 from jinja2 import Template
 from pyropython.utils import read_data
-from queue import Queue
 import sys
 
+
 class Model:
+    """ Class for evaluating simulation models
+
+    This class provides methods to create input files, execute simulator and
+    process output files. The class was originally written to be used in
+    parameter estimation for the solid pyrolysis model in Fire Dynamics
+    Simulator. However the class can be used with any executable that accepts
+    text file inputs and outputs .csv files.
+    """
+
     def __init__(self,
                  exp_data={},
                  params={},
@@ -22,7 +31,24 @@ class Model:
                  objective_function=None,
                  tempdir=None,
                  objective_opts={},
-                 files = Queue()):
+                 ):
+        """ Initialize model
+
+        Args:
+            exp_data (:dict): Experimental data in format {key: (T, F) ...},
+                where T is the independent variable and F dependent variable
+            params (:list): Parameter names and bounds in format
+                [(name,(minval,maxval))]
+            simulation (:dict):  Data lines for pyropython.utils.read_data
+                function. Keys should mach those in exp_data.
+            var_weights (:dict): Weights for each of the variables (keys)
+                defined in the exp_data and simulation dictionaries. The
+                weights are given in format:  {key: W}, where "key" is the key
+                in exp_data and W is a weight.
+            data_weights (:dict): data_weights for individual data points.
+                Given in format: {key: W}, where W is a weight vector.
+                NOTE: W should be equal length with corresponding exp_data.
+        """
         self.exp_data = exp_data
         self.params = params
         self.simulation = simulation
@@ -34,7 +60,16 @@ class Model:
         self.objective_function = objective_function
         self.objective_opts = objective_opts
 
-    def write_fds_file(self, outname, template, x):
+    def render_template(self, outname, template, x):
+        """ Renders templates.
+
+        Args:
+            outname (:string): Name of the output file
+            template (:string): Jinja2 template to be rendered
+            x (list like): parameter vector. The values in x will be used to
+                fill the variables in the templates. Values in x should be
+                given in the same order as the keys in self.params.
+        """
         f = open(outname, "tw")
         template = Template(template)
         variables = {self.params[n][0]: var for n, var in enumerate(x)}
@@ -43,7 +78,15 @@ class Model:
         f.flush()
         f.close()
 
-    def run_fds(self, x):
+    def run_simulator(self, x):
+        """ Renders templates, runs simulator and reads output
+
+        Returns:
+            data (:dict): Dictionary, with entries key: (T,F) where "key" is a
+                key from the simulation dict, T is the indpendent variable
+                and F is the dependent variable
+            pwd (:string): Working directory, where the simulation was run.
+        """
         cwd = os.getcwd()
         tempfile.tempdir = self.tempdir
         my_env = os.environ.copy()
@@ -53,7 +96,7 @@ class Model:
         devnull = open(os.devnull, 'w')
         for fname, template in self.templates:
             outname = os.path.join(pwd, fname)
-            self.write_fds_file(outname, template, x)
+            self.render_template(outname, template, x)
             proc = subprocess.Popen([self.command, fname],
                                     env=my_env,
                                     cwd=pwd,
@@ -61,21 +104,44 @@ class Model:
                                     stdout=devnull)
             proc.wait()
         devnull.close()
-        data = self.read_fds_output()
+        data = self.read_output()
         os.chdir(cwd)
         return data, pwd
 
-    def read_fds_output(self, directory=""):
+    def read_output(self):
+        """ Reads output as defined in Model.simulation dict and returns a
+            dictionary.
+
+        Returns:
+            data: Dictionary, with entries key: (T,F) where "key" is the key
+            from the Model.simulation dict, T is the indpendent variable and
+            F is the dependent variable
+        """
         data = {}
         for key, line in self.simulation.items():
             T, F = read_data(**line)
             data[key] = T, F
         return data
 
-    def fitness(self, x, files=None):
+    def fitness(self, x, queue=None):
+        """Runs model, reads ouput and evalutes objective function.
+
+        Args:
+            x (list like): parameter vector. Values for use in the
+                Model.template(s). The values are given in the same order as
+                variables in Model.params.
+            queue (a Queue, optional): Queue for saving results. Defaults to
+                None. If provided,a tuple (xi,fi,pwd) is put() on the queue.
+                The valueas xi, fi and pwd are the paramater vector, fitness
+                value and working directory (string), respectively. The user is
+                responsible for cleaning up the working directories.
+
+        Returns:
+            fit (:float): Fitness value.
+        """
         fit = 0
         x = np.reshape(x, len(self.params))
-        data, pwd = self.run_fds(x)
+        data, pwd = self.run_simulator(x)
         weight_sum = 0.0
         for key, d in data.items():
             T, F = d
@@ -89,26 +155,42 @@ class Model:
                                                   self.data_weights[key],
                                                   **opts)
         fit = fit/weight_sum
-        if files:
-            files.put((fit, x, pwd))
+        # possibly save the results.
+        if queue:
+            queue.put((fit, x, pwd))
         else:
             shutil.rmtree(pwd)
         return fit
 
-    def penalized_fitness(self,x,c=100,**kwargs):
-        """
-        Penalty function version of fitness(), for use with unconstrained
-        optimization algorithms
+    def penalized_fitness(self, x, c=100, **kwargs):
+        """Penalty function version of fitness(), for use with unconstrained
+        optimization algorithms. Calls fitness and adds a penaltu term. For
+        values far aoutside the bounds, the fitness function is not called.
+
+        Args:
+            x (list like): parameter vector. Values for use in the
+                Model.template(s). The values are given in the same order as
+                variables in Model.params. Passed on to fitness()
+            c (float): coefficient fot the penalty function:
+                p(x) = c * min(0,x-x_min)**2 + c * max(0,x-x_max)**2
+
+        Returns:
+            res (float): fitness faluye with the penalty term added
         """
         res = 0
         for n, (minval, maxval) in enumerate(self.get_bounds()):
             res += c * min(0, x[n]-minval)**2 + c * max(0, x[n]-maxval)**2
         # Don't evaluate fitness for very wrong inputs
-        if res<=1:
+        if res <= 1:
             res += self.fitness(x, **kwargs)
         return res
 
     def get_bounds(self):
+        """Returns bounds for Model.params
+
+        Returns:
+            bounds (list): list of tuples in format  [(minval,maxval)]
+        """
         return [tuple(bounds) for name, bounds in self.params]
 
 

@@ -2,7 +2,7 @@ import numpy as np
 from pyropython.objective_functions import (
     get_objective_function,
     objective_functions
-    )
+)
 
 tol = 1e-2
 
@@ -23,7 +23,7 @@ def test_standardized_moment():
     of = get_objective_function("standardized_moment")
 
     # test the four standardized moments
-    n=1000000
+    n = 1000000
     y = np.random.randn(n)
     x = np.zeros(n)
     w = np.ones(n)
@@ -31,8 +31,7 @@ def test_standardized_moment():
     mom1 = of(y, x, w, p=1)
     mom2 = of(y, x, w, p=2)
 
-
-    assert np.abs(mom1 -  np.sqrt(2/np.pi)) < tol
+    assert np.abs(mom1 - np.sqrt(2/np.pi)) < tol
     assert np.abs(mom2 - 1) < tol
 
 

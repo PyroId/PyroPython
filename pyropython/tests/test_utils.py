@@ -6,6 +6,7 @@ import os
 
 tempdir = os.path.join(os.getcwd(), "testDir")
 
+
 def test_read_data():
     """ Test reading data and gradient calculation
         This function generates a csv file to test reading datafiles
@@ -21,7 +22,7 @@ def test_read_data():
     outdata = np.stack((Time, AltTime, y, dy, y2, ny), axis=1)
     # delete=False is needed so that the tempfile can be written to in  windows
     # create working directory
-    fp = open("output.csv",mode="w+t")
+    fp = open("output.csv", mode="w+t")
     # delete=False so we can close() the file and delete later
 
     np.savetxt(fp.name, outdata,

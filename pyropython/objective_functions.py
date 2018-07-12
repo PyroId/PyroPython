@@ -9,8 +9,8 @@ from numpy import mean, abs, var
 
 
 def mse(edata, sdata, weights, **kwargs):
-    """
-        standardized mean squared error
+    """ standardized mean squared error
+
         the value of the standardized moment with p=2
             E[(sum_i ( w_i *(y_i-yhat_i) )^2]/std(w*y)^2
     """
@@ -18,8 +18,7 @@ def mse(edata, sdata, weights, **kwargs):
 
 
 def abs_dev(edata, sdata, weights, **kwargs):
-    """
-        standardized absollute deviation
+    """ standardized absollute deviation
         the value of the standardized moment
     """
     return standardized_moment(edata, sdata, weights, p=1)

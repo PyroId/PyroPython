@@ -5,8 +5,17 @@ import numpy as np
 def make_initial_design(name="rand",
                         num_points=1,
                         bounds=None):
-    """
-    Make initial design of the given type with num_points points
+    """Make initial design of the given type with num_points points
+
+    Args:
+        name (:string) Type of initial design. Current choices are "rand" and
+        "lhs"
+        num_points (:int) Number of points to sample
+        bounds (:list)  List of variable bounds. Note: number of dimensions
+            is deduced from len(bounds)
+
+    Returns:
+        xhat (list): list of num_points parameter vectors
     """
     ndim = len(bounds)
     if name == "rand":

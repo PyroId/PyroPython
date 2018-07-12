@@ -81,7 +81,6 @@ class TestClass:
 
         assert np.abs(res) < tol
 
-
     def test_optimization(self):
         """
         Test minimizing model.fitness by scipy.minimize
@@ -113,5 +112,5 @@ class TestClass:
 
     def teardown_method(self):
         if os.path.exists(tempdir):
-                shutil.rmtree(tempdir, ignore_errors=True)
-                pass
+            shutil.rmtree(tempdir, ignore_errors=True)
+            pass

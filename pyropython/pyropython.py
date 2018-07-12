@@ -5,12 +5,11 @@ import sklearn.ensemble as skl
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import freeze_support
 import numpy as np
-import time
 import argparse
 from pyropython.config import read_config
 from pyropython.utils import ensure_dir
-from pyropython.initial_design import make_initial_design
 from pyropython.optimizer import get_optimizer
+
 
 def optimize_model(case, run_opts):
     """
@@ -24,12 +23,11 @@ def optimize_model(case, run_opts):
 
     optimizer = get_optimizer(run_opts.optimizer_name)
 
-    x_best, f_best, Xi,Fi  = optimizer(case,run_opts,ex)
-
+    x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex)
 
     X = np.vstack(Xi)
     Y = np.hstack(Fi).T
-    
+
     print("\nOptimization finished. The best result found was:")
     for n, (name, bounds) in enumerate(case.params):
         print("{name} :".format(name=name), x_best[n])
@@ -47,10 +45,10 @@ def optimize_model(case, run_opts):
     for f in range(n_features):
         print(("{n}.  {var} :" +
                " ({importance:.3f})").format(
-                n=f + 1,
-                var=names[indices[f]],
-                importance=importances[indices[f]])
-            )
+            n=f + 1,
+            var=names[indices[f]],
+            importance=importances[indices[f]])
+        )
     return
 
 

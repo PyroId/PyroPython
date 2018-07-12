@@ -1,12 +1,11 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from functools import partial
-import sklearn.ensemble as skl
-from distutils.dir_util import copy_tree
-from shutil import rmtree
 from pyropython.initial_design import make_initial_design
 from multiprocessing import Manager
-from shutil import rmtree,copytree
+from shutil import rmtree, copytree
 from traceback import print_exception
+
 
 class Logger:
     """
@@ -18,7 +17,7 @@ class Logger:
     def __init__(self,
                  params=None,
                  logfile="log.csv",
-                 files = None,
+                 queue=None,
                  best_dir="Best/"):
         self.x_best = None
         self.f_best = None
@@ -29,7 +28,7 @@ class Logger:
         self.Xi = []
         self.Fi = []
         self.params = params
-        self.files = files
+        self.queue = queue
         self.best_dir = best_dir
 
         # write header to logfile before  first iteration
@@ -47,18 +46,18 @@ class Logger:
         if exc_type is not None:
             print_exception(exc_type, exc_value, tb)
 
-
     def __call__(self, **args):
-        """
-        This function call signature matches most scipy.optimize callbacks
+        """When called, cnsume the. queue, print and log iteration.
         """
         self.consume_queue()
         self.print_iteration()
         self.log_iteration()
 
-    def consume_queue(self,queue=None):
+    def consume_queue(self, queue=None):
+        """ Consume items in the queue.
+        """
         if not queue:
-            queue = self.files
+            queue = self.queue
         f_ = []
         x_ = []
         while not queue.empty():
@@ -73,11 +72,10 @@ class Logger:
             else:
                 self.f_best = fi
                 self.x_best = xi
-
             # save output of the best run
             if fi <= self.f_best:
                 rmtree(self.best_dir)
-                copytree(pwd,self.best_dir)
+                copytree(pwd, self.best_dir)
             # delete files when done
             rmtree(pwd)
 
@@ -99,7 +97,7 @@ class Logger:
                 best objective found thus far:       {bst:.3E}
                 best model:
               """
-        print(msg.format(it=self.iter,cur=self.fi, bst=self.f_best))
+        print(msg.format(it=self.iter, cur=self.fi, bst=self.f_best))
         msg = "       {name} :"
         for n, (name, bounds) in enumerate(self.params):
             print(msg.format(name=name), self.x_best[n])
@@ -111,7 +109,6 @@ class Logger:
                 ["%3f" % self.fi, "%3f" % self.f_best])
         self.logfile.write(",".join(line)+"\n")
         pass
-
 
 
 def skopt(case, runopts, executor):
@@ -126,19 +123,20 @@ def skopt(case, runopts, executor):
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
     N_iter = 0
+    print("Begin bayesian optimization.")
     with Logger(params=case.params, files=files) as log:
-        while N_iter<runopts.max_iter:
+        while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
+            print("Evaluating {num:d} points.".format(num=len(x)))
             y = list(executor.map(fun, x))
             log()
-            optimizer.tell(x ,y)
+            print("Updating metamodel and asking for points")
+            optimizer.tell(x, y)
             if N_iter < runopts.max_iter:
                 x = optimizer.ask(runopts.num_points)
             N_iter += 1
-        return log.x_best, log.f_best, log.Xi,log.Fi
+        return log.x_best, log.f_best, log.Xi, log.Fi
 
-def callback(xk):
-    print(xk)
 
 def multistart(case, runopts, executor):
     """ optimize case using multiple random starts and scipy.minimize
@@ -149,16 +147,14 @@ def multistart(case, runopts, executor):
                             bounds=case.get_bounds())
 
     N_iter = 0
-    files = Manager().Queue()
-    fun = partial(case.penalized_fitness, files=files)
-    with Logger(params=case.params, files=files) as log:
+    queue = Manager().Queue()
+    fun = partial(case.penalized_fitness, queue=queue)
+    with Logger(params=case.params, queue=queue) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             task = partial(minimize, fun,
                            method="powell",
-                           callback=callback,
-                           options={'disp': True,
-                                    'ftol': 0.01,
+                           options={'ftol': 0.01,
                                     'maxfev': 100})
             print("Minimizing {num:d} starting points.".format(num=len(x)))
             y = list(executor.map(task, x))

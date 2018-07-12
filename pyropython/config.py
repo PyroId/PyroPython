@@ -47,9 +47,24 @@ def _check_required_fields(dict, req_fields):
     """
     not_found = []
     for field in req_fields:
-        if field not in req_fields:
+        if field not in dict:
+            not_found.append(field)
+        # check for keywords followed by no input.
+        if dict[field] is None:
             not_found.append(field)
     return not_found
+
+
+def _check_misspellings(dict, valid_keys):
+    """
+    Checks keys in dict against valid keys. Suggest matches for misspellings
+    """
+    from difflib import get_close_matches
+    for key in dict:
+        if key not in valid_keys:
+            quess = get_close_matches(key, valid_keys, 1)
+            msg = "Unknown keyword {key:s} did you mean {q:s}?"
+            warnings.warn(msg.format(key=key, q=quess))
 
 
 def _set_data_line_defaults(line,
@@ -84,7 +99,7 @@ def _set_data_line_defaults(line,
 def read_model(input):
     """
     This function creates a initialized Model object based on the dictionary
-    "cfg". The dictionary is assumed to be produced by reading a yaml file
+    "cfg". The dictionary is assumed to be produced by reading a yaml file.
     """
     if isinstance(input, str):
         lines = open(input, "r").read()
@@ -99,8 +114,15 @@ def read_model(input):
                                              "variables",
                                              "templates"])
     if not_found:
-        raise KeyError("required field(s) %s not found in config." %
+        raise KeyError("Required field(s) %s not found in config." %
                        str(not_found))
+
+    # handle empyty keywords and misspelled fields
+    for key, value in cfg.items():
+        if value is None:
+            value = {}
+            msg = "Empty keyword {field:s} in config."
+            warnings.warn(msg. format(field=key))
 
     """
      yaml is sometimes unable to correctly convert str to float.
@@ -166,7 +188,7 @@ def read_model(input):
                 " Missing: \\n %s " %
                 str(set(var_weights).symmetric_difference(set(simulation))))
             for key in experiment:
-                        var_weights[key] = 1.0
+                var_weights[key] = 1.0
     else:
         for key in experiment:
             var_weights[key] = 1.0
@@ -265,7 +287,7 @@ def proc_general_options(input):
     run_opts = namedtuple('run_opts',
                           ['num_jobs', 'max_iter', 'num_points',
                            'num_initial', 'initial_design',
-                           'optimizer_opts','optimizer_name'])
+                           'optimizer_opts', 'optimizer_name'])
     run_opts.max_iter = cfg.get("max_iter", 1)
     run_opts.num_jobs = cfg.get("num_jobs", 1)
     run_opts.num_points = cfg.get("num_points", 1)
