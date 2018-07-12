@@ -4,6 +4,10 @@ Work/
 Best/
 Figs/
 log.csv
+
+## Sphinx
+docs/build/
+
 ## Following is the "Python" .gitignore example from:
 ## https://github.com/github/gitignore/
 # Byte-compiled / optimized / DLL files
