@@ -61,7 +61,7 @@ class Logger:
         f_ = []
         x_ = []
         while not queue.empty():
-            fi, xi, pwd = self.files.get()
+            fi, xi, pwd = queue.get()
             f_.append(fi)
             x_.append(xi)
             # record best valeu seen
