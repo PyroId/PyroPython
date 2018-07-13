@@ -118,13 +118,13 @@ def skopt(case, runopts, executor):
     optimizer = Optimizer(dimensions=case.get_bounds(),
                           **runopts.optimizer_opts)
     files = Manager().Queue()
-    fun = partial(case.fitness, files=files)
+    fun = partial(case.fitness, queue=files)
     x = make_initial_design(name=runopts.initial_design,
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
     N_iter = 0
     print("Begin bayesian optimization.")
-    with Logger(params=case.params, files=files) as log:
+    with Logger(params=case.params, queue=files) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             print("Evaluating {num:d} points.".format(num=len(x)))
