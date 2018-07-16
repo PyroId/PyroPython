@@ -148,9 +148,9 @@ def read_model(input):
 
     if len(cfg['templates']) < 1:
         raise ValueError("Templates list cannot be empty.")
-    templates = []
-    for fname in cfg['templates']:
-        templates.append((fname, open(fname, 'r').read()))
+
+    templates = [(fname, open(fname, 'r').read())
+                 for fname in cfg['templates']]
 
     # set default values for data lines
     for key, line in simulation.items():
