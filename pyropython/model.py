@@ -4,8 +4,8 @@ import os
 import shutil
 import numpy as np
 import subprocess
+from jinja2 import Environment,FileSystemLoader
 from pyropython import config as cfg
-from jinja2 import Template
 from pyropython.utils import read_data
 import sys
 
@@ -71,7 +71,6 @@ class Model:
                 given in the same order as the keys in self.params.
         """
         f = open(outname, "tw")
-        template = Template(template)
         variables = {self.params[n][0]: var for n, var in enumerate(x)}
         outfile = template.render(**variables)
         f.writelines(outfile)
@@ -92,10 +91,15 @@ class Model:
         my_env = os.environ.copy()
         my_env["OMP_NUM_THREADS"] = "1"
         pwd = tempfile.mkdtemp(prefix="Cone_")
+        """ Jinja2 environments/templates cannot be pickled, so the Environments
+            need to be created here.
+        """
+        env = Environment(loader=FileSystemLoader(cwd))
         os.chdir(pwd)
         devnull = open(os.devnull, 'w')
         for fname, template in self.templates:
             outname = os.path.join(pwd, fname)
+            template = env.get_template(fname)
             self.render_template(outname, template, x)
             proc = subprocess.Popen([self.command, fname],
                                     env=my_env,
