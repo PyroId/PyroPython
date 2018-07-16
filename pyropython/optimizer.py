@@ -111,6 +111,30 @@ class Logger:
         pass
 
 
+def dummy(case, runopts, executor):
+    """ optimize case using monte carlo sampling
+    """
+    files = Manager().Queue()
+    fun = partial(case.fitness, queue=files)
+    x = make_initial_design(name=runopts.initial_design,
+                            num_points=runopts.num_initial,
+                            bounds=case.get_bounds())
+    N_iter = 0
+    print("Begin random optimization.")
+    with Logger(params=case.params, queue=files) as log:
+        while N_iter < runopts.max_iter:
+            # evaluate points (in parallel)
+            print("Evaluating {num:d} points.".format(num=len(x)))
+            y = list(executor.map(fun, x))
+            log()
+            if N_iter < runopts.max_iter:
+                x = make_initial_design(name="rand",
+                                        num_points=runopts.num_points,
+                                        bounds=case.get_bounds())
+            N_iter += 1
+        return log.x_best, log.f_best, log.Xi, log.Fi
+
+
 def skopt(case, runopts, executor):
     """ optimize case using scikit-optimize
     """
@@ -170,7 +194,8 @@ def multistart(case, runopts, executor):
 
 
 optimizers = {"skopt": skopt,
-              "multistart": multistart}
+              "multistart": multistart,
+              "dummy": dummy}
 
 
 def get_optimizer(name="skopt"):
