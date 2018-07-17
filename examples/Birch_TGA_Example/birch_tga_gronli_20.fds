@@ -1,0 +1,6 @@
+&HEAD CHID='birch_tga_gronli_20', TITLE='Birch kinetics gronli scheme' / 
+
+{% set TGA_RATE=20 %}
+{% include "gronli_base.fds" %}
+
+&TAIL/
