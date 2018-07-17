@@ -95,6 +95,37 @@ def _set_data_line_defaults(line,
     line.setdefault("gradient", gradient)
     return line
 
+def _check_templates(templates,params):
+    """This function attempts to render the  given templates
+    """
+    from jinja2 import Environment, FileSystemLoader
+    from jinja2 import TemplateSyntaxError,TemplateNotFound, TemplateError
+    cwd = os.getcwd()
+    env = Environment(loader=FileSystemLoader(cwd))
+    error = False
+    for fname in templates:
+        template = env.get_template(fname)
+        variables = {name: 0.5*(minval + maxval)
+                     for name, (minval, maxval) in params}
+        try:
+            output = template.render(**variables)
+        except TemplateSyntaxError as err:
+            print(err.message)
+            print("Filename:",err.filename)
+            print("Line number:",err.lineno)
+            error = True
+            pass
+        except TemplateNotFound as err:
+            print("Template %s not found",err.name)
+            error = True
+            pass
+        except TemplateError as err:
+            print("Error wihle processing tmeplate %s" % fname)
+            error = True
+            pass
+    if error:
+        sys.exit('Problems with templates. Exiting.')
+    pass
 
 def read_model(input):
     """
@@ -224,6 +255,9 @@ def read_model(input):
     if not os.path.isfile(fds_command) and not os.access(fds_command, os.X_OK):
         raise ValueError(("The executable %s can not found or not executable" %
                           fds_command))
+
+    # Check ih the temnplates can be rendered
+    _check_templates(templates, variables)
     tempdir = os.path.join(os.getcwd(), "Work/")
     from pyropython.model import Model
     return Model(exp_data=exp_data,
