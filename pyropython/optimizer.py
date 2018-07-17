@@ -24,7 +24,7 @@ class Logger:
         self.xi = None
         self.fi = None
         self.iter = 0
-        self.logfile = open(logfile, "w")
+        self.logfile = logfile
         self.Xi = []
         self.Fi = []
         self.Fevals = []
@@ -32,17 +32,18 @@ class Logger:
         self.queue = queue
         self.best_dir = best_dir
 
+        logfile = open(self.logfile, 'w+')
         # write header to logfile before  first iteration
         header = ",".join(["Iteration"] +
                           [name for name, bounds in self.params] +
                           ["Objective", "Best Objective", "Fevals"])
-        self.logfile.write(header+"\n")
+        logfile.write(header+"\n")
+        logfile.close()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.logfile.close()
         self.consume_queue()
         if exc_type is not None:
             print_exception(exc_type, exc_value, tb)
@@ -103,14 +104,16 @@ class Logger:
         msg = "       {name} :"
         for n, (name, bounds) in enumerate(self.params):
             print(msg.format(name=name), self.x_best[n])
-        print()
+        print(flush=True)
 
     def log_iteration(self):
+        logfile = open(self.logfile, 'a+')
         """ write iteration info to log file """
         line = (["%d" % (self.iter)] + ["%.3f" % v for v in self.xi] +
                 ["%3f" % self.fi, "%3f" % self.f_best] +
-                ["%d" % len(self.Fevals)])
-        self.logfile.write(",".join(line)+"\n")
+                ["%d" % self.Fevals[-1]])
+        logfile.write(",".join(line)+"\n")
+        logfile.close()
         pass
 
 
@@ -127,7 +130,8 @@ def dummy(case, runopts, executor):
     with Logger(params=case.params, queue=files) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
-            print("Evaluating {num:d} points.".format(num=len(x)))
+            print("Evaluating {num:d} points.".format(num=len(x)),
+                  flush=True)
             y = list(executor.map(fun, x))
             log()
             if N_iter < runopts.max_iter:
@@ -157,7 +161,7 @@ def skopt(case, runopts, executor):
             print("Evaluating {num:d} points.".format(num=len(x)))
             y = list(executor.map(fun, x))
             log()
-            print("Updating metamodel and asking for points")
+            print("Updating metamodel and asking for points",flush=True)
             optimizer.tell(x, y)
             if N_iter < runopts.max_iter:
                 x = optimizer.ask(runopts.num_points)
@@ -182,8 +186,9 @@ def multistart(case, runopts, executor):
             task = partial(minimize, fun,
                            method="powell",
                            options={'ftol': 0.01,
-                                    'maxfev': 100})
-            print("Minimizing {num:d} starting points.".format(num=len(x)))
+                                    'maxfev': 10})
+            print("Minimizing {num:d} starting points.".format(num=len(x)),
+                  flush=True)
             y = list(executor.map(task, x))
             log()
             msg = "Used {N:d} function evaluations. "
