@@ -1,0 +1,6 @@
+&HEAD CHID='birch_cone_75', TITLE='Birch cone calorimeter.  gronli scheme' / 
+
+{% set EFLUX=75 %}
+{% include "Cone_Base.fds" %}
+
+&TAIL/
