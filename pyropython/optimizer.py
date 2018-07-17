@@ -27,6 +27,7 @@ class Logger:
         self.logfile = open(logfile, "w")
         self.Xi = []
         self.Fi = []
+        self.Fevals = []
         self.params = params
         self.queue = queue
         self.best_dir = best_dir
@@ -34,7 +35,7 @@ class Logger:
         # write header to logfile before  first iteration
         header = ",".join(["Iteration"] +
                           [name for name, bounds in self.params] +
-                          ["Objective", "Best Objective"])
+                          ["Objective", "Best Objective", "Fevals"])
         self.logfile.write(header+"\n")
 
     def __enter__(self):
@@ -81,6 +82,7 @@ class Logger:
 
         # record the best form this iteration
         self.iter += 1
+        self.Fevals.append(len(f_))
         if len(f_) > 0:
             ind = np.argmin(f_)
             self.fi = f_[ind]
@@ -106,7 +108,7 @@ class Logger:
     def log_iteration(self):
         """ write iteration info to log file """
         line = (["%d" % (self.iter)] + ["%.3f" % v for v in self.xi] +
-                ["%3f" % self.fi, "%3f" % self.f_best])
+                ["%3f" % self.fi, "%3f" % self.f_best], "%d" % self.Fevals)
         self.logfile.write(",".join(line)+"\n")
         pass
 
