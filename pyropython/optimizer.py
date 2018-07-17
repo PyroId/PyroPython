@@ -61,10 +61,12 @@ class Logger:
             queue = self.queue
         f_ = []
         x_ = []
+        fevals = 0
         while not queue.empty():
             fi, xi, pwd = queue.get()
             f_.append(fi)
             x_.append(xi)
+            self.Fevals.append(len(fi))
             # record best valeu seen
             if self.f_best:
                 if self.f_best > fi:
@@ -82,7 +84,6 @@ class Logger:
 
         # record the best form this iteration
         self.iter += 1
-        self.Fevals.append(len(f_))
         if len(f_) > 0:
             ind = np.argmin(f_)
             self.fi = f_[ind]
@@ -109,7 +110,7 @@ class Logger:
         """ write iteration info to log file """
         line = (["%d" % (self.iter)] + ["%.3f" % v for v in self.xi] +
                 ["%3f" % self.fi, "%3f" % self.f_best] +
-                ["%d" % len(self.Fevals)])
+                ["%d" % np.sum(self.Fevals)])
         self.logfile.write(",".join(line)+"\n")
         pass
 
