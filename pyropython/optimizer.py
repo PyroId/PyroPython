@@ -108,7 +108,8 @@ class Logger:
     def log_iteration(self):
         """ write iteration info to log file """
         line = (["%d" % (self.iter)] + ["%.3f" % v for v in self.xi] +
-                ["%3f" % self.fi, "%3f" % self.f_best], "%d" % self.Fevals)
+                ["%3f" % self.fi, "%3f" % self.f_best] +
+                ["%d" % len(self.Fevals)])
         self.logfile.write(",".join(line)+"\n")
         pass
 
