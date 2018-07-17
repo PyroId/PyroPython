@@ -180,7 +180,8 @@ def read_model(input):
     if len(cfg['templates']) < 1:
         raise ValueError("Templates list cannot be empty.")
 
-
+    templates =  cfg['templates']
+    
     # set default values for data lines
     for key, line in simulation.items():
         line = _set_data_line_defaults(line)
