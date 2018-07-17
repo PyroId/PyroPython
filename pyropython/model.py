@@ -97,7 +97,7 @@ class Model:
         env = Environment(loader=FileSystemLoader(cwd))
         os.chdir(pwd)
         devnull = open(os.devnull, 'w')
-        for fname, template in self.templates:
+        for fname in self.templates:
             outname = os.path.join(pwd, fname)
             template = env.get_template(fname)
             self.render_template(outname, template, x)
