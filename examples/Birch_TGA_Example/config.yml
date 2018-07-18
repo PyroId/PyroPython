@@ -1,6 +1,6 @@
 #start_config
 num_jobs: 10 # number of parallel jobs
-max_iter: 1 # maximum number of iterations
+max_iter: 10 # maximum number of iterations
 num_points: 10  # How many points explored per iteration
 num_initial: 150 # Number of points in initial design (here 100*ndim)
 initial_design: lhs
@@ -56,7 +56,7 @@ plots:
 templates: ["birch_tga_gronli_2.fds","birch_tga_gronli_20.fds","birch_tga_gronli_5.fds","birch_tga_gronli_10.fds"]
 optimizer_name: "skopt"
 optimizer:
-         base_estimator:        'ET'
+         base_estimator:        'gp'
          acq_func:              'EI'
          acq_optimizer:         'auto'
          n_initial_points:      1
