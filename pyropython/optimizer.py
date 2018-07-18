@@ -185,7 +185,7 @@ def multistart(case, runopts, executor):
             # evaluate points (in parallel)
             task = partial(minimize, fun,
                            method="powell",
-                           options={'ftol': 0.01})
+                           options={'ftol': 0.001})
             print("Minimizing {num:d} starting points.".format(num=len(x)),
                   flush=True)
             y = list(executor.map(task, x))
