@@ -9,11 +9,7 @@
 &DUMP DT_PL3D = 10000000. /
 &VENT XB = -0.05,0.05,-0.05,0.05,-0.1,-0.1, SURF_ID = 'BIRCH' /
 
-&REAC ID = 'PROPANE'
-    FUEL = 'PROPANE'
-	SOOT_YIELD = 0.01
-	HEAT_OF_COMBUSTION = 30000.
-	IDEAL 	=	.TRUE. /
+&REAC ID = 'PROPANE' /
 
 6 % moisture
 &SURF ID = 'BIRCH'
@@ -32,15 +28,15 @@
 Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/full/smf/smf001.pdf
 (dry wood!)
 
-&MATL ID = 'WATER'
+MATL ID = 'WATER'
 	EMISSIVITY 		= 1.0
 	DENSITY 		= 1000.
 	CONDUCTIVITY		= 0.3
 	SPECIFIC_HEAT		= 4.3 
 	N_REACTIONS		= 1
-	A			= 9.5712677e+22
-	E 			= 135663.11
-	N_S			= 3.3119154
+	A			= 2.12730857852e+21
+	E 			= 132903.442576
+	N_S			= 3.66959932938
 	NU_SPEC			= 1
 	SPEC_ID			= 'WATER VAPOR'
 	HEAT_OF_REACTION	= 2260/
@@ -51,17 +47,15 @@ Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/fu
 	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
 	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
 	N_REACTIONS		= 1
-	A			= 3.771824e+11
-	E 			= 168233.66 
-	N_S			= 0.47097871 
-	NU_SPEC		= 0.96991711
-	NU_MATL		= 0.030082893
+	A			= 669218286834.0
+	E 			= 171664.173096 
+	N_S			= 0.485164085225 
+	NU_SPEC		= 0.968419715506
+	NU_MATL		= 0.0315802844937
 	SPEC_ID		= 'PROPANE'
 	MATL_ID		= 'CHAR'
-	HEAT_OF_REACTION	 = {{HOR}}
-	HEAT_OF_COMBUSTION   = 13500/
-	/
-
+	HEAT_OF_REACTION	 = 100
+	HEAT_OF_COMBUSTION = 13500/
 
 &MATL ID = 'HEMISELLU'
 	EMISSIVITY 		= 1.0
@@ -69,15 +63,15 @@ Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/fu
 	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
 	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
 	N_REACTIONS		= 1
-	A			= 5.4780229e+11
-	E 			= 146600.58
-	N_S			= 1.500293
-	NU_SPEC		= 0.94999924
-	NU_MATL		= 0.050000763
+	A			= 207504684484.0
+	E 			= 147415.524549 
+	N_S			= 1.03013966657 
+	NU_SPEC		= 0.913196156466
+	NU_MATL		= 0.0868038435342
 	SPEC_ID		= 'PROPANE'
 	MATL_ID		= 'CHAR'
-	HEAT_OF_REACTION	 = {{HOR}}
-	HEAT_OF_COMBUSTION   = 17000/
+	HEAT_OF_REACTION	 = 400
+	HEAT_OF_COMBUSTION = 17000/
 
 &MATL ID = 'LIGNIN'
 	EMISSIVITY 		= 0.8
@@ -85,24 +79,32 @@ Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/fu
 	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
 	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
 	N_REACTIONS		= 1
-	A			= 1.1752528e+10
-	E 			= 157600.39
-	N_S			= 6.6635851
-	NU_SPEC		= 0.4595539
-	NU_MATL		= 0.5404461
+	A			= 48386259739.0
+	E 			= 158625.549233 
+	N_S			= 4.98019032668 
+	NU_SPEC		= 0.512971694937
+	NU_MATL		= 0.487028305063
 	SPEC_ID		= 'PROPANE'
 	MATL_ID		= 'CHAR'
-	HEAT_OF_REACTION	 = {{HOR}}
-	HEAT_OF_COMBUSTION   = 13400/
+	HEAT_OF_REACTION	 = 300
+	HEAT_OF_COMBUSTION = 13400/
 
 
+Make sure that thermal conductivity is increaisng
+{%set K_S_300 = K_S_20 + dK_S_300 %}
+{%set K_S_600 = K_S_300 + dK_S_600  %}
 &RAMP ID = 'RAMP_Birch_K', T = 20, F = {{K_S_20}}  /
 &RAMP ID = 'RAMP_Birch_K', T = 300, F = {{K_S_300}} /
 &RAMP ID = 'RAMP_Birch_K', T = 600, F = {{K_S_600}} /
 
+Make sure that specific heat is increaisng
+{%set C_S_300 = C_S_20 + dC_S_300 %}
+{%set C_S_600 = C_S_300 + dC_S_600  %}
 &RAMP ID = 'RAMP_Birch_C', T = 20, F =  {{C_S_20}} /
 &RAMP ID = 'RAMP_Birch_C', T = 300, F = {{C_S_300}} /
 &RAMP ID = 'RAMP_Birch_C', T = 600, F = {{C_S_600}} /
+
+
 
 &MATL ID = 'CHAR'
 	EMISSIVITY 	= 1

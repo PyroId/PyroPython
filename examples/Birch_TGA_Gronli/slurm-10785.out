@@ -1,0 +1,63 @@
+Start Optimization.
+Minimizing 1 starting points.
+
+            Iteration: 1
+                best objective from this iteration:  3.004E-02
+                best objective found thus far:       3.004E-02
+                best model:
+              
+       YGAS_LIGNIN : 0.298969717906
+       YGAS_S : 0.897016179405
+       E_SELLU : 162.85962977
+       E_HEMISELLU : 149.132122802
+       E_LIGNIN : 159.184105938
+       LOGA_HEMISELLU : 11.9884305133
+       NSW : 3.83020904922
+       NS_LIGNIN : 4.00469377816
+       LOGA_SELLU : 11.2003235327
+       NS_SELLU : 0.800979634704
+       NS_HEMISELLU : 1.68263394638
+       LOGAW : 21.2270200455
+       LOGA_LIGNIN : 10.9968785324
+       EW : 122.265945887
+       YWATER : 0.024655934997
+       YGAS_HS : 1.04587281201
+
+Used 178 function evaluations. 
+
+Optimization finished. The best result found was:
+YGAS_LIGNIN : 0.298969717906
+YGAS_S : 0.897016179405
+E_SELLU : 162.85962977
+E_HEMISELLU : 149.132122802
+E_LIGNIN : 159.184105938
+LOGA_HEMISELLU : 11.9884305133
+NSW : 3.83020904922
+NS_LIGNIN : 4.00469377816
+LOGA_SELLU : 11.2003235327
+NS_SELLU : 0.800979634704
+NS_HEMISELLU : 1.68263394638
+LOGAW : 21.2270200455
+LOGA_LIGNIN : 10.9968785324
+EW : 122.265945887
+YWATER : 0.024655934997
+YGAS_HS : 1.04587281201
+
+Variable importance scores:
+1.  E_SELLU : (0.889)
+2.  E_HEMISELLU : (0.075)
+3.  LOGA_HEMISELLU : (0.021)
+4.  LOGA_SELLU : (0.011)
+5.  NSW : (0.002)
+6.  NS_SELLU : (0.002)
+7.  YGAS_S : (0.001)
+8.  YGAS_LIGNIN : (0.000)
+9.  NS_HEMISELLU : (0.000)
+10.  E_LIGNIN : (0.000)
+11.  LOGA_LIGNIN : (0.000)
+12.  LOGAW : (0.000)
+13.  NS_LIGNIN : (0.000)
+14.  YGAS_HS : (0.000)
+15.  YWATER : (0.000)
+16.  EW : (0.000)
+Done

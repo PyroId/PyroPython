@@ -1,0 +1,137 @@
+Start Optimization.
+Begin bayesian optimization.
+Evaluating 120 points.
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/indexes/base.py", line 2525, in get_loc
+    return self._engine.get_loc(key)
+  File "pandas/_libs/index.pyx", line 117, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 139, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1265, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1273, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'MLR'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tstopi/PyroPython/pyropython/utils.py", line 43, in read_data
+    y = array(tmp[dep_col_name])
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/frame.py", line 2139, in __getitem__
+    return self._getitem_column(key)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/frame.py", line 2146, in _getitem_column
+    return self._get_item_cache(key)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/generic.py", line 1842, in _get_item_cache
+    values = self._data.get(item)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/internals.py", line 3843, in get
+    loc = self.items.get_loc(item)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/indexes/base.py", line 2527, in get_loc
+    return self._engine.get_loc(self._maybe_cast_indexer(key))
+  File "pandas/_libs/index.pyx", line 117, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 139, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1265, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1273, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'MLR'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 175, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 153, in _process_chunk
+    return [fn(*args) for args in chunk]
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 153, in <listcomp>
+    return [fn(*args) for args in chunk]
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 148, in fitness
+    data, pwd = self.run_simulator(x)
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 111, in run_simulator
+    data = self.read_output()
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 126, in read_output
+    T, F = read_data(**line)
+  File "/home/tstopi/PyroPython/pyropython/utils.py", line 47, in read_data
+    raise KeyError(msg)
+KeyError: "Column named ''MLR'' in file 'birch_cone_50_hrr.csv' not found.Column names: \\n Index(['Time', 'HRR', 'Q_RADI', 'Q_CONV', 'Q_COND', 'Q_DIFF', 'Q_PRES',\n       'Q_PART', 'Q_GEOM', 'Q_ENTH', 'Q_TOTAL', 'MLR_FUEL', 'MLR_TOTAL'],\n      dtype='object')"
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tstopi/PyroPython/pyropython/optimizer.py", line 162, in skopt
+    y = list(executor.map(fun, x))
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 556, in result_iterator
+    yield future.result()
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 405, in result
+    return self.__get_result()
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 357, in __get_result
+    raise self._exception
+KeyError: "Column named ''MLR'' in file 'birch_cone_50_hrr.csv' not found.Column names: \\n Index(['Time', 'HRR', 'Q_RADI', 'Q_CONV', 'Q_COND', 'Q_DIFF', 'Q_PRES',\n       'Q_PART', 'Q_GEOM', 'Q_ENTH', 'Q_TOTAL', 'MLR_FUEL', 'MLR_TOTAL'],\n      dtype='object')"
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/indexes/base.py", line 2525, in get_loc
+    return self._engine.get_loc(key)
+  File "pandas/_libs/index.pyx", line 117, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 139, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1265, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1273, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'MLR'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tstopi/PyroPython/pyropython/utils.py", line 43, in read_data
+    y = array(tmp[dep_col_name])
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/frame.py", line 2139, in __getitem__
+    return self._getitem_column(key)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/frame.py", line 2146, in _getitem_column
+    return self._get_item_cache(key)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/generic.py", line 1842, in _get_item_cache
+    values = self._data.get(item)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/internals.py", line 3843, in get
+    loc = self.items.get_loc(item)
+  File "/home/tstopi/anaconda3/lib/python3.5/site-packages/pandas/core/indexes/base.py", line 2527, in get_loc
+    return self._engine.get_loc(self._maybe_cast_indexer(key))
+  File "pandas/_libs/index.pyx", line 117, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 139, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1265, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 1273, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'MLR'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 175, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 153, in _process_chunk
+    return [fn(*args) for args in chunk]
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/process.py", line 153, in <listcomp>
+    return [fn(*args) for args in chunk]
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 148, in fitness
+    data, pwd = self.run_simulator(x)
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 111, in run_simulator
+    data = self.read_output()
+  File "/home/tstopi/PyroPython/pyropython/model.py", line 126, in read_output
+    T, F = read_data(**line)
+  File "/home/tstopi/PyroPython/pyropython/utils.py", line 47, in read_data
+    raise KeyError(msg)
+KeyError: "Column named ''MLR'' in file 'birch_cone_50_hrr.csv' not found.Column names: \\n Index(['Time', 'HRR', 'Q_RADI', 'Q_CONV', 'Q_COND', 'Q_DIFF', 'Q_PRES',\n       'Q_PART', 'Q_GEOM', 'Q_ENTH', 'Q_TOTAL', 'MLR_FUEL', 'MLR_TOTAL'],\n      dtype='object')"
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/bin/pyropython", line 11, in <module>
+    load_entry_point('pyropython', 'console_scripts', 'pyropython')()
+  File "/home/tstopi/PyroPython/pyropython/pyropython.py", line 89, in main
+    optimize_model(case, run_opts)
+  File "/home/tstopi/PyroPython/pyropython/pyropython.py", line 26, in optimize_model
+    x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex)
+  File "/home/tstopi/PyroPython/pyropython/optimizer.py", line 162, in skopt
+    y = list(executor.map(fun, x))
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 556, in result_iterator
+    yield future.result()
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 405, in result
+    return self.__get_result()
+  File "/home/tstopi/anaconda3/lib/python3.5/concurrent/futures/_base.py", line 357, in __get_result
+    raise self._exception
+KeyError: "Column named ''MLR'' in file 'birch_cone_50_hrr.csv' not found.Column names: \\n Index(['Time', 'HRR', 'Q_RADI', 'Q_CONV', 'Q_COND', 'Q_DIFF', 'Q_PRES',\n       'Q_PART', 'Q_GEOM', 'Q_ENTH', 'Q_TOTAL', 'MLR_FUEL', 'MLR_TOTAL'],\n      dtype='object')"

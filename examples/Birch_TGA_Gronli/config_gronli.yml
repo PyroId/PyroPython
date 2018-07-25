@@ -1,0 +1,64 @@
+#start_config
+num_jobs: 10 # number of parallel jobs
+max_iter: 1 # maximum number of iterations
+num_points: 1  # How many points explored per iteration
+num_initial: 30 # Number of points in initial design (here 100*ndim)
+initial_design: lhs 
+# full path to fds executable
+fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64 
+variables: # VAR_NAME: [LOWER,UPPER]
+    YWATER: [0.01,0.06]
+    LOGAW: [20,23]
+    EW: [120,140]
+    NSW: [2,4]
+    LOGA_SELLU: [10,12]
+    E_SELLU: [160,180]
+    NS_SELLU: [0.2,1.0]
+    YGAS_S: [0.9,1.0]
+    LOGA_HEMISELLU: [10,12]
+    E_HEMISELLU: [140,160]
+    NS_HEMISELLU: [1,2]
+    YGAS_HS: [0.9,1.0]
+    LOGA_LIGNIN: [9,11]
+    E_LIGNIN: [150,170]
+    NS_LIGNIN: [4,7]
+    YGAS_LIGNIN: [0.3,0.6] 
+simulation:
+    MASS2: {fname: 'birch_tga_gronli_2_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
+    MASS20: {fname: 'birch_tga_gronli_20_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
+    MASS5: {fname: 'birch_tga_gronli_5_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
+    MASS10: {fname: 'birch_tga_gronli_10_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
+    GMASS2: {fname: 'birch_tga_gronli_2_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp'}
+    GMASS20: {fname: 'birch_tga_gronli_20_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp'}
+    GMASS5: {fname: 'birch_tga_gronli_5_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp'}
+    GMASS10: {fname: 'birch_tga_gronli_10_tga.csv',dep_col_name: 'MLR',ind_col_name: 'Temp'}
+experiment:
+    MASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',normalize: True}
+    MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',normalize: True}
+    MASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',normalize: True}
+    MASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',normalize: True}
+    # *_exp.csv contains data TEmp, Mass (5) pair. Gradient is then dM/dT. FDS outputs MLR 1/s. Need to convert
+    # dm/dt = dT/dt * dM/dT = 20/60 K/s * dm / dT  or  10/60 K/s * dm / dT etc...
+    GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True}
+    GMASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.333,normalize: True,gradient: True}
+    GMASS5: {fname: 'birch_tga_5_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0833,normalize: True,gradient: True}
+    GMASS10: {fname: 'birch_tga_10_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.1666,normalize: True,gradient: True}
+obejctive:
+    type: "mse"
+    var_weights: {'MASS2': 1.0, 'MASS20': 1.0,'MASS5': 1.0, 'MASS10': 1.0,'GMASS20',1.0,'GMASS2',1.0,'GMASS10',1.0,'GMASS5',1.0}
+plots:
+    expMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "experimental", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    expGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "experimental", ylabel: "Mass (dM/dT)", xlabel: "Temp (C)"}
+    simMASS: {variables: ["MASS2","MASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    simGMASS: {variables: ["GMASS2","GMASS20"],labels: ["2K/min","20 K/min"],type: "simulation", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
+    cmpMASS: {variables: ["MASS2","MASS5","MASS10","MASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "Mass (-)", xlabel: "Temp (C)"}
+    cmpGMASS: {variables: ["GMASS2","GMASS5","GMASS10","GMASS20"],labels: ["2 K/min","5 K/min","10 K/min","20 K/min"],type: "comparison", ylabel: "dM/dT (-/s)", xlabel: "Temp (C)"}
+templates: ["birch_tga_gronli_2.fds","birch_tga_gronli_20.fds","birch_tga_gronli_5.fds","birch_tga_gronli_10.fds"]
+optimizer_name: "multistart"
+optimizer:
+         base_estimator:        'ET'
+         acq_func:              'EI'
+         acq_optimizer:         'auto'
+         n_initial_points:      1
+         acq_optimizer_kwargs:  {n_points: 100000, n_restarts_optimizer": 100,n_jobs: 1}
+         acq_func_kwargs:       {xi: 0.01, kappa: 1.96}

@@ -18,7 +18,7 @@ case = None
 run_opts = namedtuple('run_opts',
                       ['num_jobs', 'max_iter', 'num_points',
                        'num_initial', 'initial_design',
-                       'optimizer_opts'])
+                       'optimizer_opts','output_dir'])
 run_opts.num_jobs = 1
 run_opts.max_iter = 50
 run_opts.num_points = 100
@@ -34,7 +34,7 @@ run_opts.optimizer_opts = {"base_estimator":       "ET",
                             "n_jobs": 1},
                            "acq_func_kwargs":       {"xi": 0.01, "kappa": 1.96}
                            }
-
+run_opts.output_dir = "Best/"
 
 def _check_required_fields(dict, req_fields):
     """
@@ -181,7 +181,7 @@ def read_model(input):
         raise ValueError("Templates list cannot be empty.")
 
     templates =  cfg['templates']
-    
+
     # set default values for data lines
     for key, line in simulation.items():
         line = _set_data_line_defaults(line)
@@ -320,7 +320,8 @@ def proc_general_options(input):
     run_opts = namedtuple('run_opts',
                           ['num_jobs', 'max_iter', 'num_points',
                            'num_initial', 'initial_design',
-                           'optimizer_opts', 'optimizer_name'])
+                           'optimizer_opts', 'optimizer_name', 'output_dir',
+                           'casename'])
     run_opts.max_iter = cfg.get("max_iter", 1)
     run_opts.num_jobs = cfg.get("num_jobs", 1)
     run_opts.num_points = cfg.get("num_points", 1)
@@ -328,6 +329,12 @@ def proc_general_options(input):
     run_opts.initial_design = cfg.get("initial_design", "rand")
     run_opts.optimizer_opts = cfg.get("optimizer", {})
     run_opts.optimizer_name = cfg.get("optimizer_name", "skopt")
+    run_opts.outputdir = cfg.get("outputdir", "Best/")
+    run_opts.casename = cfg.get("casename", "")
+    if "outputdir" not in cfg and "casename" in cfg:
+        run_opts.outputdir = os.path.join("", run_opts.casename)
+    if "logfilename" not in cfg and "casename" in cfg:
+            run_opts.logfilename = run_opts.casename + ".csv"
     return run_opts
 
 

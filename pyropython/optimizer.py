@@ -127,7 +127,10 @@ def dummy(case, runopts, executor):
                             bounds=case.get_bounds())
     N_iter = 0
     print("Begin random optimization.")
-    with Logger(params=case.params, queue=files) as log:
+    with Logger(params=case.params,
+                queue=files,
+                logfile=runopts.logfilename,
+                best_dir = runopts.output_dir) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             print("Evaluating {num:d} points.".format(num=len(x)),
@@ -155,7 +158,10 @@ def skopt(case, runopts, executor):
                             bounds=case.get_bounds())
     N_iter = 0
     print("Begin bayesian optimization.")
-    with Logger(params=case.params, queue=files) as log:
+    with Logger(params=case.params,
+                queue=files,
+                logfile=runopts.logfilename,
+                best_dir = runopts.output_dir) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             print("Evaluating {num:d} points.".format(num=len(x)))
@@ -180,7 +186,10 @@ def multistart(case, runopts, executor):
     N_iter = 0
     queue = Manager().Queue()
     fun = partial(case.penalized_fitness, queue=queue)
-    with Logger(params=case.params, queue=queue) as log:
+    with Logger(params=case.params,
+                queue=files,
+                logfile=runopts.logfilename,
+                best_dir = runopts.output_dir) as log:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             task = partial(minimize, fun,
