@@ -28,7 +28,7 @@
 Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/full/smf/smf001.pdf
 (dry wood!)
 
-MATL ID = 'WATER'
+&MATL ID = 'WATER'
 	EMISSIVITY 		= 1.0
 	DENSITY 		= 1000.
 	CONDUCTIVITY		= 0.3

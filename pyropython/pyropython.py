@@ -16,9 +16,10 @@ def optimize_model(case, run_opts):
     Main optimization loop
     """
 
-    # these can perhaps be changed later to use MPI
-    # The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
-    # The Model class and associated functions are not thread safe.
+    """ these can perhaps be changed later to use MPI
+       The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
+       The Model class and associated functions are not thread safe.
+    """
     ex = ProcessPoolExecutor(run_opts.num_jobs)
 
     optimizer = get_optimizer(run_opts.optimizer_name)
@@ -76,15 +77,15 @@ def proc_commandline():
     return case, run_opts
 
 
-def create_dirs():
-    ensure_dir("Best/")
+def create_dirs(run_opts):
+    ensure_dir(run_opts.output_dir)
     ensure_dir("Work/")
-    ensure_dir("Figs/")
+    ensure_dir(run_opts.fig_dir)
 
 
 def main():
     case, run_opts = proc_commandline()
-    create_dirs()
+    create_dirs(run_opts)
     print("Start Optimization.")
     optimize_model(case, run_opts)
     print("Done")

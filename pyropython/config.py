@@ -321,7 +321,7 @@ def proc_general_options(input):
                           ['num_jobs', 'max_iter', 'num_points',
                            'num_initial', 'initial_design',
                            'optimizer_opts', 'optimizer_name', 'output_dir',
-                           'casename'])
+                           'case_name','fig_dir'])
     run_opts.max_iter = cfg.get("max_iter", 1)
     run_opts.num_jobs = cfg.get("num_jobs", 1)
     run_opts.num_points = cfg.get("num_points", 1)
@@ -329,12 +329,18 @@ def proc_general_options(input):
     run_opts.initial_design = cfg.get("initial_design", "rand")
     run_opts.optimizer_opts = cfg.get("optimizer", {})
     run_opts.optimizer_name = cfg.get("optimizer_name", "skopt")
-    run_opts.outputdir = cfg.get("outputdir", "Best/")
+    run_opts.output_dir = cfg.get("output_dir", "Best/")
+    run_opts.fig_dir = cfg.get("fig_dir", "Figs/")
     run_opts.casename = cfg.get("casename", "")
-    if "outputdir" not in cfg and "casename" in cfg:
-        run_opts.outputdir = os.path.join("", run_opts.casename)
+    run_opts.logfilename = cfg.get("logfilename", "log.csv")
+    print(run_opts.casename,run_opts.output_dir)
+    if "output_dir" not in cfg and "casename" in cfg:
+        run_opts.output_dir = run_opts.casename + "/"
     if "logfilename" not in cfg and "casename" in cfg:
-            run_opts.logfilename = run_opts.casename + ".csv"
+        run_opts.logfilename = run_opts.casename + ".csv"
+    if "figdir" not in cfg and "casename" in cfg:
+        run_opts.logfile_name = "Figs_" + run_opts.casename +"/"
+    print(run_opts.casename,run_opts.output_dir)
     return run_opts
 
 

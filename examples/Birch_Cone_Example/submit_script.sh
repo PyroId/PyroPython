@@ -1,5 +1,5 @@
 #!/bin/bash
 #SBATCH -n 10
 
-pyropython config.yml
+pyropython config_35_50.yml
 
