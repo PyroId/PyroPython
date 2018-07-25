@@ -187,7 +187,7 @@ def multistart(case, runopts, executor):
     queue = Manager().Queue()
     fun = partial(case.penalized_fitness, queue=queue)
     with Logger(params=case.params,
-                queue=files,
+                queue=queue,
                 logfile=runopts.logfilename,
                 best_dir = runopts.output_dir) as log:
         while N_iter < runopts.max_iter:
