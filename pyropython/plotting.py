@@ -7,25 +7,23 @@ from pyropython.config import read_plots
 import argparse
 import os
 import sklearn.ensemble as skl
-simulation_dir = "Best/"
-output_dir = "Figs/"
+
 
 
 def proc_commandline():
-    global simulation_dir, output_dir
     parser = argparse.ArgumentParser()
     parser.add_argument("fname", help="Input file name")
     parser.add_argument("-o", "--output_dir",
-                        help="Output directory for figure [default: Figs]",
-                        default="Figs")
+                        help="Output directory for figure [default: Figs]")
     parser.add_argument("-s", "--simulation_dir",
                         help=("Directory contaning the simulation output "
-                              "files for comparison [default: Best]"),
-                        default="Best")
+                              "files for comparison [default: Best]"))
     args = parser.parse_args()
-    simulation_dir = args.simulation_dir
-    output_dir = args.output_dir
     cfg = read_plots(args.fname)
+    if args.simulation_dir is not None:
+        cfg.output_dir = args.simulation_dir
+    if args.output_dir is not None:
+        cfg.fig_dir = args.output_dir
     return cfg
 
 
@@ -41,7 +39,7 @@ def plot_exp(cfg):
         ax.set_ylim(0, ymax)
         plt.legend()
         ax.grid(True)
-        plt.savefig("%s/Exp_%s.pdf" % (output_dir, key), bbox_inches="tight")
+        plt.savefig("%s/Exp_%s.pdf" % (cfg.fig_dir, key), bbox_inches="tight")
         plt.close()
     return
 
@@ -49,7 +47,7 @@ def plot_exp(cfg):
 def read_fds_output(cfg):
     data = {}
     for key, line in cfg.simulation.items():
-        T, F = read_data(**line, cwd=simulation_dir)
+        T, F = read_data(**line, cwd=cfg.output_dir)
         data[key] = T, F
     return data
 
@@ -67,7 +65,7 @@ def plot_sim(cfg):
         ax.set_ylim(0, ymax)
         plt.legend()
         ax.grid(True)
-        plt.savefig("%s/Sim_%s.pdf" % (output_dir, key), bbox_inches="tight")
+        plt.savefig("%s/Sim_%s.pdf" % (cfg.fig_dir, key), bbox_inches="tight")
         plt.close()
     return
 
@@ -103,7 +101,7 @@ def plot_feature_importance(cfg, result):
     ax.set_xlim([-1, n_features])
     ax.set_xlabel("Variable")
     ax.set_ylabel("Importance score")
-    plt.savefig("%s/feature_importances.pdf" % output_dir, bbox_inches="tight")
+    plt.savefig("%s/feature_importances.pdf" % cfg.fig_dir, bbox_inches="tight")
 
 
 def do_plotting(cfg):
@@ -139,8 +137,8 @@ def do_plotting(cfg):
         ax.set_xlabel(line["xlabel"])
         ax.set_ylabel(line["ylabel"])
         ax.grid(True)
-        print("%s/%s.pdf" % (output_dir, name))
-        plt.savefig("%s/%s.pdf" % (output_dir, name), bbox_inches="tight")
+        print("%s/%s.pdf" % (cfg.fig_dir, name))
+        plt.savefig("%s/%s.pdf" % (cfg.fig_dir, name), bbox_inches="tight")
         plt.close()
         #  print("Objective: %E" % check_fit(cfg))
 
@@ -166,7 +164,7 @@ def check_fit(cfg):
 
 def main():
     cfg = proc_commandline()
-    ensure_dir(os.path.join("./", output_dir))
+    ensure_dir(os.path.join("./", cfg.fig_dir))
     plot_exp(cfg)
     do_plotting(cfg)
 

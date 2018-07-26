@@ -1,9 +1,9 @@
 #start_config
 casename: optim_35_50
 num_jobs: 10 # number of parallel jobs
-max_iter: 10 # maximum number of iterations
+max_iter: 50 # maximum number of iterations
 num_points: 10  # How many points explored per iteration
-num_initial: 120 # Number of points in initial design (here 10*ndim)
+num_initial: 90 # Number of points in initial design (here 10*ndim)
 initial_design: lhs
 # full path to fds executable
 fds_command: /home/tstopi/Firemodels/fds/Build/mpi_intel_linux_64/fds_mpi_intel_linux_64 
@@ -61,7 +61,7 @@ plots:
 templates: ["birch_cone_35.fds","birch_cone_50.fds"]
 optimizer_name: "skopt" # Other choices "dummy" and "multistart"
 optimizer:
-         base_estimator:        'gp' # The simulations are slow , so the extra cost of gp may be justified
+         base_estimator:        'ET' # The simulations are slow , so the extra cost of gp may be justified
          acq_func:              'EI'
          acq_optimizer:         'auto'
          n_initial_points:      1

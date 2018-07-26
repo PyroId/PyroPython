@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/tstopi/anaconda3/bin/pyropython", line 11, in <module>
+    load_entry_point('pyropython', 'console_scripts', 'pyropython')()
+  File "/home/tstopi/PyroPython/pyropython/pyropython.py", line 87, in main
+    case, run_opts = proc_commandline()
+  File "/home/tstopi/PyroPython/pyropython/pyropython.py", line 70, in proc_commandline
+    case, run_opts = read_config(args.fname)
+  File "/home/tstopi/PyroPython/pyropython/config.py", line 351, in read_config
+    case = read_model(fname)
+  File "/home/tstopi/PyroPython/pyropython/config.py", line 136, in read_model
+    lines = open(input, "r").read()
+FileNotFoundError: [Errno 2] No such file or directory: 'config_35_75_50.yml'

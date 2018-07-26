@@ -17,6 +17,7 @@ class Logger:
     def __init__(self,
                  params=None,
                  logfile="log.csv",
+                 evalfile = "evals_log.csv",
                  queue=None,
                  best_dir="Best/"):
         self.x_best = None
@@ -50,6 +51,9 @@ class Logger:
 
     def __call__(self, **args):
         """When called, cnsume the. queue, print and log iteration.
+
+          This allows one to pass the Logger class as a callback function to
+          optimization functuions.
         """
         self.consume_queue()
         self.print_iteration()
@@ -66,7 +70,7 @@ class Logger:
             fi, xi, pwd = queue.get()
             f_.append(fi)
             x_.append(xi)
-            # record best valeu seen
+            # record best value seen
             if self.f_best:
                 if self.f_best > fi:
                     self.f_best = fi
@@ -109,10 +113,17 @@ class Logger:
     def log_iteration(self):
         logfile = open(self.logfile, 'a+')
         """ write iteration info to log file """
-        line = (["%d" % (self.iter)] + ["%.3f" % v for v in self.xi] +
-                ["%3f" % self.fi, "%3f" % self.f_best] +
-                ["%d" % self.Fevals[-1]])
-        logfile.write(",".join(line)+"\n")
+        N = self.Fevals[-1]
+        xi = np.array(self.Xi[-N:])
+        fi = np.array(self.Fi[-N:])
+        ind = xi.argsort()[::-1]
+        fi = fi[ind]
+        xi = xi[ind]
+        for n in range(0, N):
+            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi] +
+                    ["%3f" % fi, "%3f" % self.f_best] +
+                    ["%d" % self.Fevals[-1]])
+            logfile.write(",".join(line)+"\n")
         logfile.close()
         pass
 

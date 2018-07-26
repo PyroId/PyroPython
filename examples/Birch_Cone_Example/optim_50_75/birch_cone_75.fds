@@ -1,0 +1,159 @@
+&HEAD CHID='birch_cone_75', TITLE='Birch cone calorimeter.  gronli scheme' / 
+
+
+
+&MESH 	IJK=6,6,8
+	XB = -0.15,0.15,-0.15,0.15,-0.1,0.3 / 5 cm
+
+&TIME T_END=1200., DT = 0.5, WALL_INCREMENT = 1 / 600
+
+&RADI NUMBER_RADIATION_ANGLES= 100 /
+
+&DUMP DT_PL3D = 10000000. /
+&VENT XB = -0.05,0.05,-0.05,0.05,-0.1,-0.1, SURF_ID = 'BIRCH' /
+
+&REAC ID = 'PROPANE' /
+
+6 % moisture
+&SURF ID = 'BIRCH'
+	RGB =200,100,0
+	BACKING = 'INSULATED' 
+	THICKNESS  			= 0.02, 0.03
+	MATL_ID(1,1) = 'SELLU'
+	MATL_ID(1,2) = 'HEMISELLU'
+	MATL_ID(1,3) = 'LIGNIN'
+	MATL_ID(1,4) = 'WATER'
+	MATL_ID(2,1) = 'WOOL'
+	MATL_MASS_FRACTION(1,:) = 0.4794,0.2397,0.2209,0.06 
+	MINIMUM_LAYER_THICKNESS = 1E-10
+	EXTERNAL_FLUX 		 	= 75/
+
+Mass fractions (cellu - ligning) averages from http://m.metla.eu/silvafennica/full/smf/smf001.pdf
+(dry wood!)
+
+&MATL ID = 'WATER'
+	EMISSIVITY 		= 1.0
+	DENSITY 		= 1000.
+	CONDUCTIVITY		= 0.3
+	SPECIFIC_HEAT		= 4.3 
+	N_REACTIONS		= 1
+	A			= 2.12730857852e+21
+	E 			= 132903.442576
+	N_S			= 3.66959932938
+	NU_SPEC			= 1
+	SPEC_ID			= 'WATER VAPOR'
+	HEAT_OF_REACTION	= 2260/
+
+&MATL ID = 'SELLU'
+	EMISSIVITY 		= 1
+	DENSITY 		= 600.
+	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
+	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
+	N_REACTIONS		= 1
+	A			= 669218286834.0
+	E 			= 171664.173096 
+	N_S			= 0.485164085225 
+	NU_SPEC		= 0.968419715506
+	NU_MATL		= 0.0315802844937
+	SPEC_ID		= 'PROPANE'
+	MATL_ID		= 'CHAR'
+	HEAT_OF_REACTION	 = 100
+	HEAT_OF_COMBUSTION = 13500/
+
+&MATL ID = 'HEMISELLU'
+	EMISSIVITY 		= 1.0
+	DENSITY 			= 600.
+	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
+	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
+	N_REACTIONS		= 1
+	A			= 207504684484.0
+	E 			= 147415.524549 
+	N_S			= 1.03013966657 
+	NU_SPEC		= 0.913196156466
+	NU_MATL		= 0.0868038435342
+	SPEC_ID		= 'PROPANE'
+	MATL_ID		= 'CHAR'
+	HEAT_OF_REACTION	 = 400
+	HEAT_OF_COMBUSTION = 17000/
+
+&MATL ID = 'LIGNIN'
+	EMISSIVITY 		= 0.8
+	DENSITY 		= 600.
+	CONDUCTIVITY_RAMP	= 'RAMP_Birch_K', 
+	SPECIFIC_HEAT_RAMP	= 'RAMP_Birch_C',
+	N_REACTIONS		= 1
+	A			= 48386259739.0
+	E 			= 158625.549233 
+	N_S			= 4.98019032668 
+	NU_SPEC		= 0.512971694937
+	NU_MATL		= 0.487028305063
+	SPEC_ID		= 'PROPANE'
+	MATL_ID		= 'CHAR'
+	HEAT_OF_REACTION	 = 300
+	HEAT_OF_COMBUSTION = 13400/
+
+
+Make sure that thermal conductivity is increaisng
+
+
+&RAMP ID = 'RAMP_Birch_K', T = 20, F = 0.08  /
+&RAMP ID = 'RAMP_Birch_K', T = 300, F = 0.08 /
+&RAMP ID = 'RAMP_Birch_K', T = 600, F = 0.08 /
+
+Make sure that specific heat is increaisng
+
+
+&RAMP ID = 'RAMP_Birch_C', T = 20, F =  2.0 /
+&RAMP ID = 'RAMP_Birch_C', T = 300, F = 3.0 /
+&RAMP ID = 'RAMP_Birch_C', T = 600, F = 4.0 /
+
+
+
+&MATL ID = 'CHAR'
+	EMISSIVITY 	= 1
+	DENSITY 	= 253.107783053
+	CONDUCTIVITY	= 0.295334606007
+	SPECIFIC_HEAT	= 3.0 /
+
+
+
+
+&SPEC ID = 'WATER VAPOR'/
+
+
+http://www.morganthermalceramics.com/downloads/datasheets?search=fibre+blanket
+&MATL ID               = 'WOOL'
+      EMISSIVITY       = 1.0
+      CONDUCTIVITY_RAMP     = 'RAMP_K'
+      DENSITY          = 64.
+      SPECIFIC_HEAT    = 0.7 /
+
+&RAMP ID = 'RAMP_K', T = 260, F = 0.08 /
+&RAMP ID = 'RAMP_K', T = 538, F = 0.19 /
+&RAMP ID = 'RAMP_K', T = 816, F = 0.36 /
+
+http://guide.rockwool-rti.com/media/504639/rti_export_product_cat%20aug2010.pdf
+MATL ID               = 'ROCKWOOL'
+      EMISSIVITY       = 1.0
+      CONDUCTIVITY_RAMP     = 'RAMP_Kr'
+      DENSITY          = 125
+      SPECIFIC_HEAT    = 0.7 /
+
+
+&VENT MB='ZMAX', SURF_ID='OPEN' /
+&VENT MB='XMIN', SURF_ID='OPEN' /
+&VENT MB='XMAX', SURF_ID='OPEN' /
+&VENT MB='YMIN', SURF_ID='OPEN' /
+&VENT MB='YMAX', SURF_ID='OPEN' /
+
+2
+&DEVC XB = -0.05,0.05,-0.05,0.05,-.1,-.1, IOR = 3
+      QUANTITY = 'SURFACE DENSITY' STATISTICS = 'SURFACE INTEGRAL' CONVERSION_FACTOR=100.  /
+3
+&DEVC XYZ = 0,0,-0.1, IOR = 3 QUANTITY = 'WALL TEMPERATURE'/
+4
+&DEVC XB = -0.15,0.15,-0.15,0.15,-0.1,0.3 QUANTITY = 'HRR', CONVERSION_FACTOR = 100. /
+&DEVC XYZ = 0,0,-0.1, IOR = 3 QUANTITY = 'WALL THICKNESS'/
+&TAIL /
+
+&TAIL/

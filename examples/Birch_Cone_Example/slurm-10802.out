@@ -1,0 +1,148 @@
+optim_35_50 Best/
+optim_35_50 optim_35_50/
+Start Optimization.
+Begin bayesian optimization.
+Evaluating 120 points.
+
+            Iteration: 1
+                best objective from this iteration:  2.056E+00
+                best objective found thus far:       2.056E+00
+                best model:
+              
+       dC_S_300 : 0.51487575864
+       K_S_20 : 0.159996679011
+       dK_S_300 : 0.13375852441
+       C_C : 1.33676639518
+       dK_S_600 : 0.442897483017
+       RHO_C : 218.827691602
+       K_C : 0.118593043863
+       C_S_20 : 1.91595352181
+       dC_S_600 : 0.582258931491
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 2
+                best objective from this iteration:  1.407E+00
+                best objective found thus far:       1.407E+00
+                best model:
+              
+       dC_S_300 : 0.348588078554
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 242.603237043
+       K_C : 0.10738148064
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 3
+                best objective from this iteration:  8.969E-01
+                best objective found thus far:       8.969E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 3.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.583658896993
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 4
+                best objective from this iteration:  8.617E-01
+                best objective found thus far:       8.617E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.6
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 5
+                best objective from this iteration:  9.803E-01
+                best objective found thus far:       8.617E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.6
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 6
+                best objective from this iteration:  1.015E+00
+                best objective found thus far:       8.617E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.6
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 7
+                best objective from this iteration:  9.210E-01
+                best objective found thus far:       8.617E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.6
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points
+Evaluating 10 points.
+
+            Iteration: 8
+                best objective from this iteration:  9.242E-01
+                best objective found thus far:       8.617E-01
+                best model:
+              
+       dC_S_300 : 1.0
+       K_S_20 : 0.08
+       dK_S_300 : 0.0
+       C_C : 1.0
+       dK_S_600 : 0.0
+       RHO_C : 100.0
+       K_C : 0.6
+       C_S_20 : 2.0
+       dC_S_600 : 1.0
+
+Updating metamodel and asking for points

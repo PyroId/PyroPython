@@ -285,8 +285,11 @@ def read_plots(input):
                            ['raw_data',
                             'simulation',
                             'exp_data',
-                            'plots'
+                            'plots',
+                            'fig_dir',
+                            'output_dir'
                             ])
+
     simulation = cfg.get('simulation', {})
     experiment = cfg.get('experiment', {})
     for key, line in simulation.items():
@@ -307,7 +310,9 @@ def read_plots(input):
         tmp = dict(line)  # create copy
         tmp["filter_type"] = "None"
         plot_data.raw_data[key] = read_data(**tmp)
-
+    run_opts = proc_general_options(input)
+    plot_data.fig_dir = run_opts.fig_dir
+    plot_data.output_dir = run_opts.output_dir
     return plot_data
 
 
@@ -338,9 +343,8 @@ def proc_general_options(input):
         run_opts.output_dir = run_opts.casename + "/"
     if "logfilename" not in cfg and "casename" in cfg:
         run_opts.logfilename = run_opts.casename + ".csv"
-    if "figdir" not in cfg and "casename" in cfg:
-        run_opts.logfile_name = "Figs_" + run_opts.casename +"/"
-    print(run_opts.casename,run_opts.output_dir)
+    if "fig_dir" not in cfg and "casename" in cfg:
+        run_opts.fig_dir = "Figs_" + run_opts.casename +"/"
     return run_opts
 
 
