@@ -251,7 +251,7 @@ def read_model(input):
         warnings.warn("fds_command not defined. Using 'fds'")
     fds_command = cfg.get("fds_command", "fds")
     # check if fds_command is found and executable
-    if not os.path.isfile(fds_command) and not os.access(fds_command, os.X_OK):
+    if not os.path.isfile(fds_command) or not os.access(fds_command, os.X_OK):
         raise ValueError(("The executable %s can not found or not executable" %
                           fds_command))
 
