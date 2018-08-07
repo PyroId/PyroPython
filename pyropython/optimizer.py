@@ -114,14 +114,15 @@ class Logger:
         logfile = open(self.logfile, 'a+')
         """ write iteration info to log file """
         N = self.Fevals[-1]
-        xi = np.array(self.Xi[-N:])
-        fi = np.array(self.Fi[-N:])
-        ind = xi.argsort()[::-1]
+        xi = np.array(self.Xi[-1])
+        fi = np.array(self.Fi[-1])
+        ind = fi.argsort()[::-1]
         fi = fi[ind]
         xi = xi[ind]
+
         for n in range(0, N):
-            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi] +
-                    ["%3f" % fi, "%3f" % self.f_best] +
+            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi[n]] +
+                    ["%3f" % fi[n], "%3f" % self.f_best] +
                     ["%d" % self.Fevals[-1]])
             logfile.write(",".join(line)+"\n")
         logfile.close()
