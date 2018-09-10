@@ -17,7 +17,7 @@ class Logger:
     def __init__(self,
                  params=None,
                  logfile="log.csv",
-                 evalfile = "evals_log.csv",
+                 evalfile="evals_log.csv",
                  queue=None,
                  best_dir="Best/"):
         self.x_best = None
@@ -111,17 +111,18 @@ class Logger:
         print(flush=True)
 
     def log_iteration(self):
+        """ write iteration info to log file
+
+            'iteration' in this context refers to what was read from the queue
+            last time that consume_queue was called.
+        """
         logfile = open(self.logfile, 'a+')
-        """ write iteration info to log file """
-        N = self.Fevals[-1]
-        xi = np.array(self.Xi[-N:])
-        fi = np.array(self.Fi[-N:])
-        ind = xi.argsort()[::-1]
-        fi = fi[ind]
-        xi = xi[ind]
-        for n in range(0, N):
-            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi] +
-                    ["%3f" % fi, "%3f" % self.f_best] +
+        xi = self.Xi[-1]
+        fi = np.array(self.Fi[-1])
+        ind = fi.argsort()[::-1]
+        for i in ind:
+            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi[i]] +
+                    ["%3f" % fi[i], "%3f" % self.f_best] +
                     ["%d" % self.Fevals[-1]])
             logfile.write(",".join(line)+"\n")
         logfile.close()
