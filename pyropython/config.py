@@ -345,6 +345,9 @@ def proc_general_options(input):
         run_opts.logfilename = run_opts.casename + ".csv"
     if "fig_dir" not in cfg and "casename" in cfg:
         run_opts.fig_dir = "Figs_" + run_opts.casename +"/"
+    # Add trailing slash if it isn't there
+    run_opts.output_dir = os.path.join(run_opts.output_dir, '')
+    run_opts.fig_dir = os.path.join(run_opts.fig_dir, '')
     return run_opts
 
 
