@@ -117,12 +117,17 @@ class Logger:
             last time that consume_queue was called.
         """
         logfile = open(self.logfile, 'a+')
-        xi = self.Xi[-1]
+        """ write iteration info to log file """
+        N = self.Fevals[-1]
+        xi = np.array(self.Xi[-1])
         fi = np.array(self.Fi[-1])
         ind = fi.argsort()[::-1]
-        for i in ind:
-            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi[i]] +
-                    ["%3f" % fi[i], "%3f" % self.f_best] +
+        fi = fi[ind]
+        xi = xi[ind]
+
+        for n in range(0, N):
+            line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi[n]] +
+                    ["%3f" % fi[n], "%3f" % self.f_best] +
                     ["%d" % self.Fevals[-1]])
             logfile.write(",".join(line)+"\n")
         logfile.close()
