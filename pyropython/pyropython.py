@@ -20,8 +20,9 @@ def optimize_model(case, run_opts):
        The executor needs to be *PROCESS*PoolExecutor, not *THREAD*Pool
        The Model class and associated functions are not thread safe.
     """
+    print("Numebr of parallel jobs: %d" % run_opts.num_jobs)
     ex = ProcessPoolExecutor(run_opts.num_jobs)
-
+    print("Optimizer name: %s" % run_opts.optimizer_name )
     optimizer = get_optimizer(run_opts.optimizer_name)
 
     x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex)
@@ -86,8 +87,8 @@ def create_dirs(run_opts):
 
 def main():
     case, run_opts = proc_commandline()
+    case.print_info()
     create_dirs(run_opts)
-    print("Start Optimization.")
     optimize_model(case, run_opts)
     print("Done")
 

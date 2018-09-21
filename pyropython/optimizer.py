@@ -166,6 +166,7 @@ def skopt(case, runopts, executor):
     """ optimize case using scikit-optimize
     """
     from skopt import Optimizer
+
     optimizer = Optimizer(dimensions=case.get_bounds(),
                           **runopts.optimizer_opts)
     files = Manager().Queue()
@@ -174,7 +175,20 @@ def skopt(case, runopts, executor):
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
     N_iter = 0
+    print()
     print("Begin bayesian optimization.")
+    print("="*20)
+    print("Base estimator:")
+    print()
+    print(optimizer.base_estimator_)
+    print()
+    print("Acquisition function: %s" % optimizer.acq_func)
+    print("Acquisition function kwargs:")
+    print(optimizer.acq_func_kwargs)
+    print("Acquisition function optimizer kwargs:")
+    print(optimizer.acq_optimizer_kwargs)
+    print("Maximum iterations: %d " % runopts.max_iter)
+    print("Points per iteration: %d " % runopts.num_points)
     with Logger(params=case.params,
                 queue=files,
                 logfile=runopts.logfilename,
