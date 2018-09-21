@@ -198,6 +198,37 @@ class Model:
         return [tuple(bounds) for name, bounds in self.params]
 
 
+    def print_info(self):
+        """ Print model info
+        """
+        print("Model information")
+        print("="*30)
+        print("Parameters:")
+        print()
+        for name,(minval,maxval) in  self.params:
+            print("%30s: [%.3e,%.3e]" % (name,minval,maxval))
+        
+        print("Variable weights:")
+        print()
+        for name,weight in  self.var_weights.items():
+            print("%30s: %.3e" % (name,weight))
+
+        print("Data weights:")
+        print()          
+        for name, weights in  self.data_weights.items():
+            print("%30s: mean: %.3e min: %.3e max: %.3e" % (name,np.mean(weights),np.min(weights),np.max(weights)))
+        
+        print("Templates:")
+        print()  
+        for name in self.templates:
+            print(name)
+        print()
+        print("Command: %s" % self.command) 
+        print("Temp dir: %s" % self.tempdir) 
+        print("Objective function: %s " % self.objective_function.__name__) 
+        print("Objective options") 
+        print(self.objective_opts)
+
 def main():
     fname = sys.argv[1]
     cfg.read_config(fname)
