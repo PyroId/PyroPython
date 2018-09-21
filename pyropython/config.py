@@ -66,6 +66,34 @@ def _check_misspellings(dict, valid_keys):
             msg = "Unknown keyword {key:s} did you mean {q:s}?"
             warnings.warn(msg.format(key=key, q=quess))
 
+def _proc_optimizer_opts(args_dict):
+    """Process optimizer kwargs. 
+    
+    This is meainly used to set different defaults
+    for skopt.learn - Tree regressors. 
+    """
+    from skopt.utils import cook_estimator
+    if "base_estimator" in args_dict:
+        if args_dict["base_estimator"]=="ET":
+            args = {"n_estimators": 1000,
+                    "min_samples_leaf":1,
+                    "max_depth":None,
+                    "bootstrap":False}
+        elif args_dict["base_estimator"]=="RF":
+            args = {"n_estimators": 100,
+                    "min_samples_leaf": 1,
+                    "max_depth": None,
+                    "bootstrap": True}
+        elif args_dict["base_estimator"]=="GBRT":
+            args = None
+        else:
+            args = None
+        if args: 
+            args_dict["base_estimator"] = cook_estimator(
+                                            args_dict["base_estimator"],
+                                            **args)
+    return args_dict
+        
 
 def _set_data_line_defaults(line,
                             ind_col_name="Time",
@@ -155,6 +183,8 @@ def read_model(input):
             msg = "Empty keyword {field:s} in config."
             warnings.warn(msg. format(field=key))
 
+    #keywords = ["objective"]
+    #_check_misspellings(cfg,keywords)
     """
      yaml is sometimes unable to correctly convert str to float.
      For example, scientific notation like "1e15" will  fail.
@@ -215,7 +245,7 @@ def read_model(input):
                 "If weights are defined for one or more variables they " +
                 "should  be defined for all variables in 'experiment'" +
                 " and 'simulation'. Weights will be set to unity. " +
-                " Missing: \\n %s " %
+                " Missing: \n %s " %
                 str(set(var_weights).symmetric_difference(set(simulation))))
             for key in experiment:
                 var_weights[key] = 1.0
@@ -325,6 +355,7 @@ def proc_general_options(input):
     run_opts = namedtuple('run_opts',
                           ['num_jobs', 'max_iter', 'num_points',
                            'num_initial', 'initial_design',
+                           'initial_points_from_file',
                            'optimizer_opts', 'optimizer_name', 'output_dir',
                            'case_name','fig_dir'])
     run_opts.max_iter = cfg.get("max_iter", 1)
@@ -332,13 +363,15 @@ def proc_general_options(input):
     run_opts.num_points = cfg.get("num_points", 1)
     run_opts.num_initial = cfg.get("num_initial", 1)
     run_opts.initial_design = cfg.get("initial_design", "rand")
-    run_opts.optimizer_opts = cfg.get("optimizer", {})
+    opt = cfg.get("optimizer", {})
+    run_opts.optimizer_opts = _proc_optimizer_opts(opt)
     run_opts.optimizer_name = cfg.get("optimizer_name", "skopt")
     run_opts.output_dir = cfg.get("output_dir", "Best/")
     run_opts.fig_dir = cfg.get("fig_dir", "Figs/")
     run_opts.casename = cfg.get("casename", "")
     run_opts.logfilename = cfg.get("logfilename", "log.csv")
-
+    run_opts.initial_points_from_file = cfg.get("initial_points_from_file", 
+                                                None)
     if "output_dir" not in cfg and "casename" in cfg:
         run_opts.output_dir = run_opts.casename + "/"
     if "logfilename" not in cfg and "casename" in cfg:
@@ -356,6 +389,7 @@ def read_config(fname):
     Reads and processes pyropython config file
     """
     case = read_model(fname)
+    # check for misspelled keys
     run_opts = proc_general_options(fname)
     return case, run_opts
 
