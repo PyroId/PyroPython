@@ -11,6 +11,29 @@ def ensure_dir(f):
     if not os.path.exists(d):
         os.makedirs(d)
 
+def read_initial_points(filename,param_names):
+    """Read initial design from a csv file.
+    
+    This function takes a csv file that has a column for eatch param_name.
+    For example, you can rea in the log.csv output by a previous optimization 
+    and continue from where you left off
+    This is especially useful for continuing optimization were you left off.
+    
+    Parameters
+    ----------
+    * `filename` [string or `pathlib.Path`]:
+        The path of the file from which to load the initial design.
+    * `param_names` [string or `pathlib.Path`]:
+        The path of the file from which to load the initial design.
+
+    Returns
+    -------
+    * `Xi` ['list']: list of points whwre function was evaluated
+    * `yi` ['list']: list of objective values
+    """
+    
+    yield
+    
 
 def read_data(fname=None,
               dep_col_name=None,
