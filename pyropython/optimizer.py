@@ -2,7 +2,8 @@
 import numpy as np
 from functools import partial
 from pyropython.initial_design import make_initial_design
-from multiprocessing import Manager
+from multiprocessing import Manager,Queue,Lock
+from multiprocessing.managers import BaseManager
 from shutil import rmtree, copytree
 from traceback import print_exception
 
@@ -19,6 +20,7 @@ class Logger:
                  logfile="log.csv",
                  evalfile="evals_log.csv",
                  queue=None,
+                 lock=None,
                  best_dir="Best/"):
         self.x_best = None
         self.f_best = None
@@ -31,6 +33,7 @@ class Logger:
         self.Fevals = []
         self.params = params
         self.queue = queue
+        self.lock = Lock()
         self.best_dir = best_dir
 
         logfile = open(self.logfile, 'w+')
@@ -49,16 +52,27 @@ class Logger:
         if exc_type is not None:
             print_exception(exc_type, exc_value, tb)
 
-    def __call__(self, **args):
+    def __call__(self, *args,**kwargs):
         """When called, cnsume the. queue, print and log iteration.
 
           This allows one to pass the Logger class as a callback function to
           optimization functuions.
         """
-        self.consume_queue()
-        self.print_iteration()
-        self.log_iteration()
+        with self.lock:
+            self.consume_queue()
+            self.print_iteration()
+            self.log_iteration()
 
+    def callback(self, *args,**kwargs):
+        """When called, cnsume the. queue, print and log iteration.
+
+          This allows one to pass the Logger class as a callback function to
+          optimization functuions.
+        """
+        with self.lock:
+            self.consume_queue()
+            self.print_iteration()
+            self.log_iteration()
     def consume_queue(self, queue=None):
         """ Consume items in the queue.
         """
@@ -210,39 +224,92 @@ def multistart(case, runopts, executor):
     """ optimize case using multiple random starts and scipy.minimize
     """
     from scipy.optimize import minimize
+
+    class MyManager(BaseManager): pass
+
+    def Manager():
+        m = MyManager()
+        m.start()
+        return m 
+
     x = make_initial_design(name=runopts.initial_design,
                             num_points=runopts.num_initial,
                             bounds=case.get_bounds())
 
     N_iter = 0
-    queue = Manager().Queue()
-    fun = partial(case.penalized_fitness, queue=queue)
-    with Logger(params=case.params,
+    # Make a proxy class in order to share the Logger between Processes
+    # This is ugly , but I _really_ want to use the Logger class as callback
+    # this can only be done if the Logger class is shared between processes
+    MyManager.register("Logger",Logger)
+    MyManager.register("Lock",Lock)
+    MyManager.register("Queue",Queue)
+    m= Manager()
+    lock = m.Lock()
+    queue = m.Queue()
+    log = m.Logger(params=case.params,
                 queue=queue,
+                lock=lock,
                 logfile=runopts.logfilename,
-                best_dir = runopts.output_dir) as log:
+                best_dir = runopts.output_dir) 
+    fun = partial(case.penalized_fitness, queue=queue)
+    print("Evaluating {num:d} random points.".format(num=len(x)),
+                  flush=True)
+    y = list(executor.map(fun, x))
+    indices = np.argsort(y)
+    candidates = [x[i] for i in indices]
+    if len(candidates) < runopts.max_iter*runopts.num_points :
+        N = runopts.max_iter*runopts.num_points - len(candidates) 
+        x_new = make_initial_design(name="rand",
+                                    num_points=N,
+                                    bounds=case.get_bounds())
+        candidates.extend(x_new)
+    cur = 0
+    try:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
+            x_eval = candidates[cur:cur+runopts.num_points]
+            cur = cur + runopts.num_points
             task = partial(minimize, fun,
-                           method="powell",
-                           options={'ftol': 0.001})
+                           method="Nelder-Mead",
+                           callback = log.callback,
+                           options={'ftol': 0.001,
+                                    'adaptive': True})
             print("Minimizing {num:d} starting points.".format(num=len(x)),
                   flush=True)
             y = list(executor.map(task, x))
-            log()
             msg = "Used {N:d} function evaluations. "
             print(msg.format(N=len(log.Fi[-1])))
-            if N_iter < runopts.max_iter:
-                x = make_initial_design(name="rand",
-                                        num_points=runopts.num_points,
-                                        bounds=case.get_bounds())
+
             N_iter += 1
         return log.x_best, log.f_best, log.Xi, log.Fi
+    finally:
+            log()
 
+        
+
+def differential_evolution(case, runopts, executor):
+    """ optimize case using monte carlo sampling
+    """
+    files = Manager().Queue()
+    fun = partial(case.fitness, queue=files)
+    N_iter = 0
+    print("Begin differential evolution")
+    print("NOTE: parallel evaluation not currently supported. Maybe in future scipy")
+    from scipy.optimize import differential_evolution as de
+    with Logger(params=case.params,
+                queue=files,
+                logfile=runopts.logfilename,
+                best_dir = runopts.output_dir) as log:
+            y = de(fun,bounds=case.get_bounds(),
+                   max_iter = runopts.max_iter,
+                   callback = log.callback)
+
+    return log.x_best, log.f_best, log.Xi, log.Fi
 
 optimizers = {"skopt": skopt,
               "multistart": multistart,
-              "dummy": dummy}
+              "dummy": dummy,
+              "de": differential_evolution}
 
 
 def get_optimizer(name="skopt"):
