@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import sklearn.ensemble as skl
-
+from pyropython.initial_design import make_initial_design
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import freeze_support
 import numpy as np
 import argparse
 from pyropython.config import read_config
-from pyropython.utils import ensure_dir
+from pyropython.utils import ensure_dir, read_initial_design
 from pyropython.optimizer import get_optimizer
-
+import sys
 
 def optimize_model(case, run_opts):
     """
@@ -25,7 +25,23 @@ def optimize_model(case, run_opts):
     print("Optimizer name: %s" % run_opts.optimizer_name )
     optimizer = get_optimizer(run_opts.optimizer_name)
 
-    x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex)
+    if run_opts.initial_design_file is not None:
+        print("Initial design from file: {0}".format(run_opts.initial_design_file))
+        param_names = [name for name,bounds in case.params]
+        initial_design, fvals = read_initial_design(run_opts.initial_design_file,param_names)
+        n_points = len(initial_design)
+        if fvals is not None:
+            n_vals = len(fvals)
+        else:
+            n_vals = 0 
+    else:
+        print("Initial design: {0}".format(run_opts.initial_design))
+        initial_design = make_initial_design(name=run_opts.initial_design,
+                            num_points=run_opts.num_initial,
+                            bounds=case.get_bounds())
+        fvals = None
+
+    x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex, initial_design, fvals)
 
     X = np.vstack(Xi)
     Y = np.hstack(Fi).T

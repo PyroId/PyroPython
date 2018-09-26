@@ -75,8 +75,8 @@ def _proc_optimizer_opts(args_dict):
     from skopt.utils import cook_estimator
     if "base_estimator" in args_dict:
         if args_dict["base_estimator"]=="ET":
-            args = {"n_estimators": 1000,
-                    "min_samples_leaf":1,
+            args = {"n_estimators": 100,
+                    "min_samples_leaf":3,
                     "max_depth":None,
                     "bootstrap":False}
         elif args_dict["base_estimator"]=="RF":
@@ -181,7 +181,7 @@ def read_model(input):
         if value is None:
             value = {}
             msg = "Empty keyword {field:s} in config."
-            warnings.warn(msg. format(field=key))
+            warnings.warn(msg.format(field=key))
 
     #keywords = ["objective"]
     #_check_misspellings(cfg,keywords)
@@ -370,7 +370,7 @@ def proc_general_options(input):
     run_opts.fig_dir = cfg.get("fig_dir", "Figs/")
     run_opts.casename = cfg.get("casename", "")
     run_opts.logfilename = cfg.get("logfilename", "log.csv")
-    run_opts.initial_points_from_file = cfg.get("initial_points_from_file", 
+    run_opts.initial_design_file = cfg.get("initial_design_file", 
                                                 None)
     if "output_dir" not in cfg and "casename" in cfg:
         run_opts.output_dir = run_opts.casename + "/"

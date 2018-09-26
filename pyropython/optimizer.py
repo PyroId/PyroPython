@@ -23,9 +23,9 @@ class Logger:
                  lock=None,
                  best_dir="Best/"):
         self.x_best = None
-        self.f_best = None
+        self.f_best = np.inf
         self.xi = None
-        self.fi = None
+        self.fi = np.inf
         self.iter = 0
         self.logfile = logfile
         self.Xi = []
@@ -36,6 +36,8 @@ class Logger:
         self.lock = Lock()
         self.best_dir = best_dir
 
+        self.x_best = np.zeros(len(self.params))
+        self.xi = self.x_best
         logfile = open(self.logfile, 'w+')
         # write header to logfile before  first iteration
         header = ",".join(["Iteration"] +
@@ -67,12 +69,22 @@ class Logger:
         """When called, cnsume the. queue, print and log iteration.
 
           This allows one to pass the Logger class as a callback function to
-          optimization functuions.
+          optimization functions.
         """
+        if self.queue.empty():
+            return
         with self.lock:
             self.consume_queue()
             self.print_iteration()
             self.log_iteration()
+
+    def log_points(self, Xi, yi):
+        # Add points to the queue
+        for n,xi in enumerate(Xi):
+            self.queue.put( (yi[n], xi, None) )
+
+
+
     def consume_queue(self, queue=None):
         """ Consume items in the queue.
         """
@@ -94,10 +106,14 @@ class Logger:
                 self.x_best = xi
             # save output of the best run
             if fi <= self.f_best:
-                rmtree(self.best_dir)
-                copytree(pwd, self.best_dir)
+                if pwd is not None:
+                    rmtree(self.best_dir)
+                    copytree(pwd, self.best_dir)
+                else:
+                    print("WARNING: optimum found outside the variable bounds.")
             # delete files when done
-            rmtree(pwd)
+            if pwd is not None:
+                rmtree(pwd)
 
         # record the best form this iteration
         self.iter += 1
@@ -148,46 +164,50 @@ class Logger:
         pass
 
 
-def dummy(case, runopts, executor):
+def dummy(case, runopts, executor, initial_design, fvals = None):
     """ optimize case using monte carlo sampling
     """
     files = Manager().Queue()
     fun = partial(case.fitness, queue=files)
-    x = make_initial_design(name=runopts.initial_design,
-                            num_points=runopts.num_initial,
-                            bounds=case.get_bounds())
+    x = initial_design
     N_iter = 0
     print("Begin random optimization.")
     with Logger(params=case.params,
                 queue=files,
                 logfile=runopts.logfilename,
                 best_dir = runopts.output_dir) as log:
+        if fvals is not None:
+            log.log_points(x, fvals)
+            x = make_initial_design(name="rand",
+                                    num_points=runopts.num_points,
+                                    bounds=case.get_bounds())
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             print("Evaluating {num:d} points.".format(num=len(x)),
                   flush=True)
             y = list(executor.map(fun, x))
             log()
+            N_iter += 1
             if N_iter < runopts.max_iter:
                 x = make_initial_design(name="rand",
                                         num_points=runopts.num_points,
                                         bounds=case.get_bounds())
-            N_iter += 1
+            
         return log.x_best, log.f_best, log.Xi, log.Fi
 
 
-def skopt(case, runopts, executor):
+def skopt(case, runopts, executor, initial_design, fvals = None):
     """ optimize case using scikit-optimize
     """
     from skopt import Optimizer
+    from skopt.acquisition import gaussian_lcb
+    from scipy.optimize import minimize, differential_evolution
 
     optimizer = Optimizer(dimensions=case.get_bounds(),
                           **runopts.optimizer_opts)
     files = Manager().Queue()
     fun = partial(case.fitness, queue=files)
-    x = make_initial_design(name=runopts.initial_design,
-                            num_points=runopts.num_initial,
-                            bounds=case.get_bounds())
+    x = initial_design
     N_iter = 0
     print()
     print("Begin bayesian optimization.")
@@ -203,28 +223,49 @@ def skopt(case, runopts, executor):
     print(optimizer.acq_optimizer_kwargs)
     print("Maximum iterations: %d " % runopts.max_iter)
     print("Points per iteration: %d " % runopts.num_points)
+
+
     with Logger(params=case.params,
                 queue=files,
                 logfile=runopts.logfilename,
                 best_dir = runopts.output_dir) as log:
+        if fvals is not None:
+            print("Initializing metamodel with given points")
+            log.log_points(x,fvals)
+            optimizer.tell(x, fvals)
+            x = optimizer.ask(runopts.num_points)
+            y_pred = optimizer.models[-1].predict(x)
+        else:
+            y_pred = None
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
             print("Evaluating {num:d} points.".format(num=len(x)))
             y = list(executor.map(fun, x))
             log()
-            print("Updating metamodel and asking for points",flush=True)
+            if y_pred is not None:
+                err = np.abs(np.array(y) - np.array(y_pred))
+                print("Metamodel prediction error:")
+                print("    Min: {0:.2e} Max: {1:.2e} Mean: {2:.2e}".format(np.min(err),np.max(err),np.mean(err)))
+                print("Updating metamodel and asking for points",flush=True)
             optimizer.tell(x, y)
             if N_iter < runopts.max_iter:
                 x = optimizer.ask(runopts.num_points)
+                y_pred = optimizer.models[-1].predict(x)
             N_iter += 1
         return log.x_best, log.f_best, log.Xi, log.Fi
 
 
-def multistart(case, runopts, executor):
+def multistart(case, runopts, executor, initial_design, fvals = None):
     """ optimize case using multiple random starts and scipy.minimize
     """
     from scipy.optimize import minimize
 
+
+    
+    # Make a proxy class in order to share the Logger between Processes
+    # This is ugly , but I _really_ want to use the Logger class as callback
+    # this can only be done if the Logger class is shared between processes
+    
     class MyManager(BaseManager): pass
 
     def Manager():
@@ -232,14 +273,6 @@ def multistart(case, runopts, executor):
         m.start()
         return m 
 
-    x = make_initial_design(name=runopts.initial_design,
-                            num_points=runopts.num_initial,
-                            bounds=case.get_bounds())
-
-    N_iter = 0
-    # Make a proxy class in order to share the Logger between Processes
-    # This is ugly , but I _really_ want to use the Logger class as callback
-    # this can only be done if the Logger class is shared between processes
     MyManager.register("Logger",Logger)
     MyManager.register("Lock",Lock)
     MyManager.register("Queue",Queue)
@@ -247,14 +280,25 @@ def multistart(case, runopts, executor):
     lock = m.Lock()
     queue = m.Queue()
     log = m.Logger(params=case.params,
-                queue=queue,
-                lock=lock,
-                logfile=runopts.logfilename,
-                best_dir = runopts.output_dir) 
+                   queue=queue,
+                   lock=lock,
+                   logfile=runopts.logfilename,
+                   best_dir = runopts.output_dir) 
+
     fun = partial(case.penalized_fitness, queue=queue)
-    print("Evaluating {num:d} random points.".format(num=len(x)),
+
+    x = initial_design
+
+    # this allows us to start from results of earlier optimization, say skopt,
+    # and polish the results using nelder-mead
+    if fvals is None:
+        print("Evaluating {num:d} random points.".format(num=len(x)),
                   flush=True)
-    y = list(executor.map(fun, x))
+        y = list(executor.map(fun, x))
+    else:
+        y = fvals
+        log.log_points(x,y)
+
     indices = np.argsort(y)
     candidates = [x[i] for i in indices]
     if len(candidates) < runopts.max_iter*runopts.num_points :
@@ -264,6 +308,8 @@ def multistart(case, runopts, executor):
                                     bounds=case.get_bounds())
         candidates.extend(x_new)
     cur = 0
+    N_iter = 0
+
     try:
         while N_iter < runopts.max_iter:
             # evaluate points (in parallel)
@@ -274,21 +320,22 @@ def multistart(case, runopts, executor):
                            callback = log.callback,
                            options={'ftol': 0.001,
                                     'adaptive': True})
-            print("Minimizing {num:d} starting points.".format(num=len(x)),
+            print("Minimizing {num:d} starting points.".format(num=runopts.num_points),
                   flush=True)
-            y = list(executor.map(task, x))
+
+            y = list(executor.map(task, x_eval))
             msg = "Used {N:d} function evaluations. "
             print(msg.format(N=len(log.Fi[-1])))
-
             N_iter += 1
+
         return log.x_best, log.f_best, log.Xi, log.Fi
     finally:
-            log()
+            log.callback()
 
         
 
-def differential_evolution(case, runopts, executor):
-    """ optimize case using monte carlo sampling
+def differential_evolution(case, runopts, executor, initial_design, fvals):
+    """ optimize case using scipy.optimize.differential_evolution
     """
     files = Manager().Queue()
     fun = partial(case.fitness, queue=files)
@@ -301,7 +348,7 @@ def differential_evolution(case, runopts, executor):
                 logfile=runopts.logfilename,
                 best_dir = runopts.output_dir) as log:
             y = de(fun,bounds=case.get_bounds(),
-                   max_iter = runopts.max_iter,
+                   maxiter = runopts.max_iter,
                    callback = log.callback)
 
     return log.x_best, log.f_best, log.Xi, log.Fi

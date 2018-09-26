@@ -79,7 +79,10 @@ class Model:
 
     def run_simulator(self, x):
         """ Renders templates, runs simulator and reads output
-
+         Args:
+            x (list like): parameter vector. The values in x will be used to
+                fill the variables in the templates. Values in x should be
+                given in the same order as the keys in self.params.
         Returns:
             data (:dict): Dictionary, with entries key: (T,F) where "key" is a
                 key from the simulation dict, T is the indpendent variable
@@ -166,7 +169,7 @@ class Model:
             shutil.rmtree(pwd)
         return fit
 
-    def penalized_fitness(self, x, c=100, **kwargs):
+    def penalized_fitness(self, x, c=100, queue=None):
         """Penalty function version of fitness(), for use with unconstrained
         optimization algorithms. Calls fitness and adds a penaltu term. For
         values far aoutside the bounds, the fitness function is not called.
@@ -186,7 +189,9 @@ class Model:
             res += c * min(0, x[n]-minval)**2 + c * max(0, x[n]-maxval)**2
         # Don't evaluate fitness for very wrong inputs
         if res <= 1:
-            res += self.fitness(x, **kwargs)
+            res += self.fitness(x, queue)
+        elif queue:
+             queue.put((res, x, None))
         return res
 
     def get_bounds(self):
