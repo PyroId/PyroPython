@@ -6,6 +6,7 @@ from multiprocessing import Manager,Queue,Lock
 from multiprocessing.managers import BaseManager
 from shutil import rmtree, copytree
 from traceback import print_exception
+import time
 
 
 class Logger:
@@ -35,14 +36,15 @@ class Logger:
         self.queue = queue
         self.lock = Lock()
         self.best_dir = best_dir
-
+        self.start_time = time.perf_counter()
+        self.iteration_time = 0
         self.x_best = np.zeros(len(self.params))
         self.xi = self.x_best
         logfile = open(self.logfile, 'w+')
         # write header to logfile before  first iteration
         header = ",".join(["Iteration"] +
                           [name for name, bounds in self.params] +
-                          ["Objective", "Best Objective", "Fevals"])
+                          ["Objective", "Best Objective", "Fevals","Time"])
         logfile.write(header+"\n")
         logfile.close()
 
@@ -124,17 +126,23 @@ class Logger:
             self.xi = x_[ind]
             self.Xi.append(x_)
             self.Fi.append(f_)
+        current_time = time.perf_counter()
+        self.iteration_time = current_time - self.start_time
+        self.start_time = current_time
 
     def print_iteration(self):
         """ prints the solution from current iteration """
         # Print info
         msg = """
-            Iteration: {it:d}
+            Iteration: {it:d}  Iteration time: {time:.2f} s
                 best objective from this iteration:  {cur:.3E}
                 best objective found thus far:       {bst:.3E}
                 best model:
               """
-        print(msg.format(it=self.iter, cur=self.fi, bst=self.f_best))
+        print(msg.format(it=self.iter,
+                         cur=self.fi,
+                         bst=self.f_best,
+                         time=self.iteration_time))
         msg = "       {name} :"
         for n, (name, bounds) in enumerate(self.params):
             print(msg.format(name=name), self.x_best[n])
@@ -158,7 +166,8 @@ class Logger:
         for n in range(0, N):
             line = (["%d" % (self.iter)] + ["%.3f" % v for v in xi[n]] +
                     ["%3f" % fi[n], "%3f" % self.f_best] +
-                    ["%d" % self.Fevals[-1]])
+                    ["%d" % self.Fevals[-1]] +
+                    ["%.2e" % self.iteration_time])
             logfile.write(",".join(line)+"\n")
         logfile.close()
         pass
@@ -299,6 +308,7 @@ def multistart(case, runopts, executor, initial_design, fvals = None):
         y = fvals
         log.log_points(x,y)
 
+    log.callback()
     indices = np.argsort(y)
     candidates = [x[i] for i in indices]
     if len(candidates) < runopts.max_iter*runopts.num_points :
