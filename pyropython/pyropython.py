@@ -10,6 +10,7 @@ from pyropython.config import read_config
 from pyropython.utils import ensure_dir, read_initial_design
 from pyropython.optimizer import get_optimizer
 import sys
+from datetime import datetime
 
 def optimize_model(case, run_opts):
     """
@@ -41,8 +42,10 @@ def optimize_model(case, run_opts):
                             bounds=case.get_bounds())
         fvals = None
 
+    startTime = datetime.now()
+    print('\nTime: ', startTime)
     x_best, f_best, Xi, Fi = optimizer(case, run_opts, ex, initial_design, fvals)
-
+    print('\nTime elapsed: ',datetime.now() - startTime)
     X = np.vstack(Xi)
     Y = np.hstack(Fi).T
 

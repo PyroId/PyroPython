@@ -73,12 +73,20 @@ def _proc_optimizer_opts(args_dict):
     for skopt.learn - Tree regressors. 
     """
     from skopt.utils import cook_estimator
+    if args_dict is None:
+        return {}
     if "base_estimator" in args_dict:
         if args_dict["base_estimator"]=="ET":
             args = {"n_estimators": 100,
                     "min_samples_leaf":3,
                     "max_depth":None,
                     "bootstrap":False}
+        elif args_dict["base_estimator"]=="ET2":
+            args = {"n_estimators": 1000,
+                    "min_samples_leaf":1,
+                    "max_depth":None,
+                    "bootstrap":False}
+            args_dict["base_estimator"]="ET"
         elif args_dict["base_estimator"]=="RF":
             args = {"n_estimators": 100,
                     "min_samples_leaf": 1,
@@ -364,7 +372,7 @@ def proc_general_options(input):
     run_opts.num_initial = cfg.get("num_initial", 1)
     run_opts.initial_design = cfg.get("initial_design", "rand")
     opt = cfg.get("optimizer", {})
-    run_opts.optimizer_opts = _proc_optimizer_opts(opt)
+    run_opts.optimizer_opts = _proc_optimizer_opts(opt) 
     run_opts.optimizer_name = cfg.get("optimizer_name", "skopt")
     run_opts.output_dir = cfg.get("output_dir", "Best/")
     run_opts.fig_dir = cfg.get("fig_dir", "Figs/")
