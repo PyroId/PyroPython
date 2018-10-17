@@ -8,8 +8,11 @@ import numpy as np
 
 def ensure_dir(f):
     d = os.path.dirname(f)
-    if not os.path.exists(d):
-        os.makedirs(d)
+    try:
+      if not os.path.exists(d):
+          os.makedirs(d)
+    except FileExistsError:
+          pass 
 
 def read_initial_design(filename,param_names):
     """Read initial design from a csv file.
