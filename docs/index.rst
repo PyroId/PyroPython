@@ -12,6 +12,8 @@
 
     intro
     installation
+    usage
+    configuration
     examples
 
 

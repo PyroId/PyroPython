@@ -1,23 +1,36 @@
+============
 Installation
-------------
-Download the sources.
+============
 
+Pyropython is a command line tool written in python.  You will need access to
+the command line, a python distribution (e.g. `anaconda`_), `git`_ version control software and a text editor (e.g. `atom`_).
+
+.. _atom: https://atom.io/
+.. _anaconda: https://www.anaconda.com/download/
+.. _git: https://git-scm.com/
+
+The sources to pyropython are available at https://github.com/PyroId/PyroPython.
+Download the sources.
 ::
+
     git clone
 
-In the download directory
+In the download directory type:
 ::
+
     pip install -e .
+
+Note the trailing dot (.). The above command installs a *development* version of the software.
+This means that if you modify the source you just downloaded, you do not need to install the software again.
 
 Prerequisites
     1. FDS
     2. Python 3
     3. Python packages: Numpy, Scipy, Matplotlib, pandas, yaml, scikit-learn, scikit-optimize, Jinja2
 
-
 Probably the easiest way to install the prerequisites
 
-    1. Install Anaconda (or miniconda) [https://www.anaconda.com/download/#linux]
+    1. Install Anaconda (or miniconda) [https://www.anaconda.com/download/]
     2. Type:
 
 ..
@@ -35,33 +48,3 @@ Probably the easiest way to install the prerequisites
 
 ..
      pyropython -h
-
-
-
-Basic usage
------------
-
-::
-
-    pyropython config.yml
-
-The config.yml file is a yaml-based configuration file. Below is a minimal
-example of a configuration file
-
-.. code-block:: yaml
-
-    num_jobs: 2 # number of parallel jobs
-    max_iter: 1 # maximum number of iterations
-    num_points: 2  # How many points explored per iteration
-    num_initial: 10 # Number of points in initial design
-    initial_design: lhs
-    # lines startting with hash (#) are comments
-    fds_command: path/to/executable
-    variables:
-      A:       [4.0,14.0]
-      E:       [100000.0, 500000.0]
-    simulation:
-        MASS20: {fname: 'birch_tga_1step_20_tga.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
-        experiment:
-        MASS20: {fname: 'birch_tga_20_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp'}
-        templates: ["birch_tga_1step_20.fds"]
