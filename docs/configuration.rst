@@ -51,7 +51,9 @@ optional. A minimal configuration file looks like this:
         GMASS2: {fname: 'birch_tga_2_exp.csv',dep_col_name: 'Mass',ind_col_name: 'Temp',conversion_factor: 0.0333,normalize: True,gradient: True}
     templates: ["birch_tga_gronli_2.fds"]
 
-This configuration file instructs PyroPython to match the
+This configuration file instructs PyroPython to match the variables MASS2 and GMASS2
+by changing the variables var1 and var2. The optimization is done using a single process
+and optimization continues for 10 iterations.
 
 Configuration file keywords
 ----------------------------
@@ -143,15 +145,72 @@ Configuration file keywords
     A list of variables to be read from the simulation output. Each variable is
     given in format:
 
-    .. py:data:: varname: {fname dep_col_name: ind_col_name header,normalize,gradient,filter}
+    .. code-block:: yaml
 
+        varname: {fname: , dep_col_name: , ind_col_name: , header: , normalize: , gradient: , filter:}
 
+    .. py:data:: varname
 
+            Variable name. Used to mach variables from "simulation" with variables
+            from "experiment"
+
+    .. py:data:: fname
+
+            A csv filename, where the simulator output can be read.
+
+    .. py:data:: dep_col_name
+
+            Name of the column containing the *dependent* variable data.
+
+    .. py:data:: dep_col_name
+
+            Name of the column containing the *independent* variable data.
+
+    The following keywords are *optional*
+
+    .. py:data:: header (optional, default = 1)
+
+            Number of header lines to skip. Default value is 1 and implies that
+            the variable names are given on the *second* row of the .csv file.
+            The default value is chosen with FDS output files in mind, where
+            the first row contains unit info.
+
+    .. py:data:: normalize (optional, default = False)
+
+            Should TGA normalization be applied to data? Default: False. If set
+            to True, the data is normalized as
+
+            ::
+
+                y = y / y(0)
+
+    .. py:data:: normalize (optional, default = False)
+
+            Should gradient be calculated from the data? If set to True, gradient
+            is calculated using numpy.
+
+    .. py:data:: filter (optional, default = None)
+
+            Filter to be appleid to the data. Choices are:
+
+                1. "gp", for Gaussian process. This fits a GaussianProcessRegressor
+                    from scikit-learn to the data and uses the predicted mean of the
+                    fitted process as the smoothed data
+                2. "ma", for moving average.
+                3. "median", for median filter.
 
 .. py:data:: experiment
+        A list of variables that form the experimental data. Each entry in
+        *simulation* should have a corresponding entry in *experiment*.
+        The format is  exactly the same as in *simulation*, with one exception:
+        The default value of *header* keyword is 0, implying that the variable
+        names should be given in the first row of the .csv - file.
 
-
-.. py:data:: obejctive:
+.. py:data:: obejctive (optional, Default: mse)
+        Type of objective function
 .. py:data:: plots
+        List of plots to be drawn
 .. py:data:: optimizer_name
+        Name of the optimizer
 .. py:data:: optimizer
+        optimizer options.
