@@ -200,6 +200,7 @@ Configuration file keywords
                 3. "median", for median filter.
 
 .. py:data:: experiment
+
         A list of variables that form the experimental data. Each entry in
         *simulation* should have a corresponding entry in *experiment*.
         The format is  exactly the same as in *simulation*, with one exception:
@@ -207,10 +208,17 @@ Configuration file keywords
         names should be given in the first row of the .csv - file.
 
 .. py:data:: obejctive (optional, Default: mse)
+
         Type of objective function
-.. py:data:: plots
+.. py:data:: plots (optional)
+
         List of plots to be drawn
 .. py:data:: optimizer_name
+
         Name of the optimizer
-.. py:data:: optimizer
-        optimizer options.
+.. py:data:: optimizer (optional)
+
+        Optimizer options. Curretly only supported for scikit-optimize. This is
+        a  dictionary of options passed to the `skopt.optimizer`_ module.
+
+.. _skopt.optimizer:  https://scikit-optimize.github.io/optimizer/index.html

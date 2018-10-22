@@ -1,4 +1,4 @@
-.. pyropyhton documentation master file, created by
+.. pyropython documentation master file, created by
    sphinx-quickstart on Wed Jul 11 16:28:42 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -20,10 +20,11 @@ parameters for any simulator that outputs data in csv format  with text headers.
 Pyropython is a wrapper around existing optimizatioon libraries and is written in
 a fashion that allows easy addition of new algorithms. Currently supported algorithms
 are:
-    1. Random sampling
-    2. Nelder-Mead simplex (from `scipy`_)
-    3. Differential evolution (also from `scipy`)
-    4. Bayesian Optimization (using `scikit-optimize`)
+
+1. Random sampling
+2. Nelder-Mead simplex (from `scipy`_)
+3. Differential evolution (also from `scipy`)
+4. Bayesian Optimization (using `scikit-optimize`)
 
 .. _scipy: https://www.scipy.org/
 .. _scikit-optimize: https://scikit-optimize.github.io/
@@ -31,7 +32,7 @@ are:
 The PyroPython tool is released as open source software and is available from  https://github.com/PyroId/PyroPython.
 The documentation can be found at http://pyroid.github.io/ .
 
-Development of PyroPyhton was financed by state nuclear waste fund in the `SAFIR2018`_
+Development of PyroPython was financed by state nuclear waste fund in the `SAFIR2018`_
 programme and `NKS`_
 
 .. _NKS: http://www.nks.org/
@@ -47,6 +48,9 @@ programme and `NKS`_
     installation
     usage
     configuration
+    templates
+    plots
+    filters
     examples
 
 
