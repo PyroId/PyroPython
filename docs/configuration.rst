@@ -149,33 +149,33 @@ Configuration file keywords
 
         varname: {fname: , dep_col_name: , ind_col_name: , header: , normalize: , gradient: , filter:}
 
-    .. py:data:: varname
+    .. py:attribute:: varname
 
             Variable name. Used to mach variables from "simulation" with variables
             from "experiment"
 
-    .. py:data:: fname
+    .. py:attribute:: fname
 
             A csv filename, where the simulator output can be read.
 
-    .. py:data:: dep_col_name
+    .. py:attribute:: dep_col_name
 
             Name of the column containing the *dependent* variable data.
 
-    .. py:data:: dep_col_name
+    .. py:attribute:: ind_col_name
 
             Name of the column containing the *independent* variable data.
 
     The following keywords are *optional*
 
-    .. py:data:: header (optional, default = 1)
+    .. py:attribute:: header (optional, default = 1)
 
             Number of header lines to skip. Default value is 1 and implies that
             the variable names are given on the *second* row of the .csv file.
             The default value is chosen with FDS output files in mind, where
             the first row contains unit info.
 
-    .. py:data:: normalize (optional, default = False)
+    .. py:attribute:: normalize (optional, default = False)
 
             Should TGA normalization be applied to data? Default: False. If set
             to True, the data is normalized as
@@ -184,12 +184,12 @@ Configuration file keywords
 
                 y = y / y(0)
 
-    .. py:data:: normalize (optional, default = False)
+    .. py:attribute:: normalize (optional, default = False)
 
             Should gradient be calculated from the data? If set to True, gradient
             is calculated using numpy.
 
-    .. py:data:: filter (optional, default = None)
+    .. py:attribute:: filter (optional, default = None)
 
             Filter to be appleid to the data. Choices are:
 
@@ -207,15 +207,18 @@ Configuration file keywords
         The default value of *header* keyword is 0, implying that the variable
         names should be given in the first row of the .csv - file.
 
-.. py:data:: obejctive (optional, Default: mse)
+.. py:data:: objective (optional, Default: mse)
 
         Type of objective function
 .. py:data:: plots (optional)
 
-        List of plots to be drawn
-.. py:data:: optimizer_name
+        List of plots to be drawn. See the section :ref:`Plotting` for more information.
+        :noindex:
 
-        Name of the optimizer
+.. py:data:: optimizer_name (default: 'skopt')
+
+        Name of the optimizer. See :ref:`Optimizers` for more information.
+
 .. py:data:: optimizer (optional)
 
         Optimizer options. Curretly only supported for scikit-optimize. This is

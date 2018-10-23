@@ -25,8 +25,7 @@ The variable is entered into the template in the following manner::
           CONDUCTIVITY = {{VAR1}}
           SPECIFIC_HEAT=1
 
-
-The input file is actually a Jinja2 template ([http://jinja.pocoo.org/]).
+The **{{VAR1}}** in the above template will be replaced by a value from the optimizer.
 This allows one to create various constructs such as create ramps from parametrized
 curves as follows
 

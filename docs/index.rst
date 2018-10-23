@@ -44,11 +44,11 @@ programme and `NKS`_
     :maxdepth: 2
     :caption: Contents:
 
-    quickstart
     installation
     usage
     configuration
     templates
+    optimizers
     plots
     filters
     examples
