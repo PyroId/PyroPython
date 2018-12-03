@@ -270,15 +270,15 @@ def read_model(input):
     for key, (etime, edata) in exp_data.items():
         if key in data_weights:
             entry = data_weights[key]
-            if isinstance(dict, entry):
+            if isinstance(entry, dict):
                 wtime, weights = read_data(**entry)
-            elif isinstance(list, entry):
+            elif isinstance(entry, list):
                 wtime, weights = zip(*entry)
             else:
                 warnings.warn(("Problem with weights for variable %s."
                                "Weigths set to one.") % key)
                 wtime = etime
-                weights = ones(1, len(etime))
+                weights = ones(len(etime))
         else:
             wtime = etime
             weights = ones(len(etime))
