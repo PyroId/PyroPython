@@ -2,12 +2,34 @@
 import numpy as np
 from functools import partial
 from pyropython.initial_design import make_initial_design
-from multiprocessing import Manager,Queue,Lock
-from multiprocessing.managers import BaseManager
+import multiprocessing
+import multiprocessing.managers
 from shutil import rmtree, copytree
 from traceback import print_exception
 import time
 
+# This needs to be defined at the top of the module.
+# Otherwise won't work on windows
+class MyManager(multiprocessing.managers.BaseManager): 
+    pass
+
+# There is a  bug in multiprocessing module in python 3.6 and 3.7
+# at least. Monkey patch The Autoproxy
+# See: https://stackoverflow.com/a/9079062
+import sys
+if sys.version_info[1]in [6,7]:
+    # Backup original AutoProxy function
+    backup_autoproxy = multiprocessing.managers.AutoProxy
+
+    # Defining a new AutoProxy that handles unwanted key argument 'manager_owned'
+    def redefined_autoproxy(token, serializer, manager=None, authkey=None,
+              exposed=None, incref=True, manager_owned=True):
+        # Calling original AutoProxy without the unwanted key argument
+        return backup_autoproxy(token, serializer, manager, authkey,
+                         exposed, incref)
+
+    # Updating AutoProxy definition in multiprocessing.managers package
+    multiprocessing.managers.AutoProxy = redefined_autoproxy
 
 class Logger:
     """
@@ -34,7 +56,7 @@ class Logger:
         self.Fevals = []
         self.params = params
         self.queue = queue
-        self.lock = Lock()
+        self.lock = multiprocessing.Lock()
         self.best_dir = best_dir
         self.start_time = time.perf_counter()
         self.iteration_time = 0
@@ -172,6 +194,8 @@ class Logger:
         logfile.close()
         pass
 
+    def get_log(self):
+        return self.x_best, self.f_best, self.Xi, self.Fi
 
 def dummy(case, runopts, executor, initial_design, fvals = None):
     """ optimize case using monte carlo sampling
@@ -274,17 +298,14 @@ def multistart(case, runopts, executor, initial_design, fvals = None):
     # Make a proxy class in order to share the Logger between Processes
     # This is ugly , but I _really_ want to use the Logger class as callback
     # this can only be done if the Logger class is shared between processes
-    
-    class MyManager(BaseManager): pass
-
     def Manager():
         m = MyManager()
         m.start()
         return m 
 
     MyManager.register("Logger",Logger)
-    MyManager.register("Lock",Lock)
-    MyManager.register("Queue",Queue)
+    MyManager.register("Lock",multiprocessing.Lock)
+    MyManager.register("Queue",multiprocessing.Queue)
     m= Manager()
     lock = m.Lock()
     queue = m.Queue()
@@ -335,10 +356,11 @@ def multistart(case, runopts, executor, initial_design, fvals = None):
 
             y = list(executor.map(task, x_eval))
             msg = "Used {N:d} function evaluations. "
-            print(msg.format(N=len(log.Fi[-1])))
+            x_best, f_best, Xi, Fi = log.get_log()
+            print(msg.format(N=len(Fi[-1])))
             N_iter += 1
 
-        return log.x_best, log.f_best, log.Xi, log.Fi
+        return x_best, f_best, Xi, Fi
     finally:
             log.callback()
 
