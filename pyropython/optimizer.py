@@ -8,28 +8,7 @@ from shutil import rmtree, copytree
 from traceback import print_exception
 import time
 
-# This needs to be defined at the top of the module.
-# Otherwise won't work on windows
-class MyManager(multiprocessing.managers.BaseManager): 
-    pass
 
-# There is a  bug in multiprocessing module in python 3.6 and 3.7
-# at least. Monkey patch The Autoproxy
-# See: https://stackoverflow.com/a/9079062
-import sys
-if sys.version_info[1]in [6,7]:
-    # Backup original AutoProxy function
-    backup_autoproxy = multiprocessing.managers.AutoProxy
-
-    # Defining a new AutoProxy that handles unwanted key argument 'manager_owned'
-    def redefined_autoproxy(token, serializer, manager=None, authkey=None,
-              exposed=None, incref=True, manager_owned=True):
-        # Calling original AutoProxy without the unwanted key argument
-        return backup_autoproxy(token, serializer, manager, authkey,
-                         exposed, incref)
-
-    # Updating AutoProxy definition in multiprocessing.managers package
-    multiprocessing.managers.AutoProxy = redefined_autoproxy
 
 class Logger:
     """
@@ -197,6 +176,45 @@ class Logger:
     def get_log(self):
         return self.x_best, self.f_best, self.Xi, self.Fi
 
+
+# This needs to be defined at the top of the module.
+# Otherwise won't work on windows
+class MyManager(multiprocessing.managers.BaseManager): 
+    pass
+
+# Make a proxy class in order to share the Logger between Processes
+# This is ugly , but I _really_ want to use the Logger class as callback
+# this can only be done if the Logger class is shared between processes
+def Manager():
+    m = MyManager()
+    m.start()
+    return m 
+
+# There is a  bug in multiprocessing module in python 3.6 and 3.7
+# at least. Monkey patch The Autoproxy
+# See: https://stackoverflow.com/a/9079062
+import sys
+if sys.version_info[1]in [6,7]:
+    # Backup original AutoProxy function
+    backup_autoproxy = multiprocessing.managers.AutoProxy
+
+    # Defining a new AutoProxy that handles unwanted key argument 'manager_owned'
+    def redefined_autoproxy(token, serializer, manager=None, authkey=None,
+              exposed=None, incref=True, manager_owned=True):
+        # Calling original AutoProxy without the unwanted key argument
+        return backup_autoproxy(token, serializer, manager, authkey,
+                         exposed, incref)
+
+    # Updating AutoProxy definition in multiprocessing.managers package
+    multiprocessing.managers.AutoProxy = redefined_autoproxy
+
+MyManager.register("Logger",Logger)
+MyManager.register("Lock",multiprocessing.Lock)
+MyManager.register("Queue",multiprocessing.Queue)
+
+
+
+
 def dummy(case, runopts, executor, initial_design, fvals = None):
     """ optimize case using monte carlo sampling
     """
@@ -294,18 +312,6 @@ def multistart(case, runopts, executor, initial_design, fvals = None):
     from scipy.optimize import minimize
 
 
-    
-    # Make a proxy class in order to share the Logger between Processes
-    # This is ugly , but I _really_ want to use the Logger class as callback
-    # this can only be done if the Logger class is shared between processes
-    def Manager():
-        m = MyManager()
-        m.start()
-        return m 
-
-    MyManager.register("Logger",Logger)
-    MyManager.register("Lock",multiprocessing.Lock)
-    MyManager.register("Queue",multiprocessing.Queue)
     m= Manager()
     lock = m.Lock()
     queue = m.Queue()
