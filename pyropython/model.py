@@ -104,11 +104,12 @@ class Model:
             outname = os.path.join(pwd, fname)
             template = env.get_template(fname)
             self.render_template(outname, template, x)
-            proc = subprocess.Popen([self.command, fname],
-                                    env=my_env,
-                                    cwd=pwd,
-                                    stderr=devnull,
-                                    stdout=devnull)
+            with  open("%s_stdout.txt" % fname,"wb") as out:
+                proc = subprocess.Popen([self.command, fname],
+                                         env=my_env,
+                                         cwd=pwd,
+                                         stderr=out,
+                                         stdout=out)
             proc.wait()
         devnull.close()
         data = self.read_output()

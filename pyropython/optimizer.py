@@ -7,6 +7,7 @@ import multiprocessing.managers
 from shutil import rmtree, copytree
 from traceback import print_exception
 import time
+import os
 
 
 
@@ -110,7 +111,8 @@ class Logger:
             # save output of the best run
             if fi <= self.f_best:
                 if pwd is not None:
-                    rmtree(self.best_dir)
+                    if os.path.exists(self.best_dir):
+                        rmtree(self.best_dir)
                     copytree(pwd, self.best_dir)
                 else:
                     print("WARNING: optimum found outside the variable bounds.")
